@@ -18,6 +18,7 @@ class _HomePageState extends State<HomePage> {
   final Map<int, List<Map<String, dynamic>>> allThreads = {
     0: [
       {
+        'userName': 'ujangasep',
         'threadName': 'p/kritik_saran',
         'boardType': 'Asking',
         'time': '2j yang lalu',
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
         'isReposted': false,
       },
       {
+        'userName': 'suamisahopera',
         'threadName': 'p/umamusume',
         'boardType': 'Gallery',
         'time': '3j yang lalu',
@@ -48,6 +50,7 @@ class _HomePageState extends State<HomePage> {
     ],
     1: [
       {
+        'userName': 'whenyahaku21',
         'threadName': 'p/grayscale',
         'boardType': 'Asking',
         'time': '2j yang lalu',
@@ -62,6 +65,7 @@ class _HomePageState extends State<HomePage> {
         'isReposted': false,
       },
       {
+        'userName': 'exoromulus',
         'threadName': 'p/background_scene',
         'boardType': 'Gallery',
         'time': '4j yang lalu',
@@ -78,6 +82,7 @@ class _HomePageState extends State<HomePage> {
     ],
     2: [
       {
+        'userName': 'BayuNugraha',
         'threadName': 'p/event_komunitas',
         'boardType': 'Info',
         'time': '2m yang lalu',
@@ -92,6 +97,7 @@ class _HomePageState extends State<HomePage> {
         'isReposted': true,
       },
       {
+        'userName': 'Salaluak',
         'threadName': 'p/komik_indie',
         'boardType': 'Info',
         'time': '5m yang lalu',
@@ -108,7 +114,7 @@ class _HomePageState extends State<HomePage> {
     ],
   };
 
-  Color getBoardColor(String boardType) {
+  Color getBoardColor(String? boardType) {
     if (boardType == 'Asking') {
       return Colors.redAccent;
     } else if (boardType == 'Info') {
@@ -337,41 +343,69 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: getBoardColor(thread['boardType']),
-                              shape: BoxShape.circle,
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        child: Icon(
+                          Icons.person_outline_rounded,
+                          size: 22,
+                          color: subTextColor,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              thread['userName'] ?? 'User Tidak Diketahui',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: textColor,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            thread['threadName'],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                              color: getBoardColor(thread['boardType']),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: getBoardColor(
+                                        thread['boardType']?.toString()),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  thread['threadName'] ?? 'p/thread',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                    color: getBoardColor(
+                                        thread['boardType']?.toString()),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '• ${thread['time'] ?? 'Baru saja'}',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: subTextColor,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '• ${thread['time']}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: subTextColor,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       InkWell(
                         onTap: () {
                           setState(() {
-                            thread['isFollowed'] = !thread['isFollowed'];
+                            thread['isFollowed'] = !(thread['isFollowed'] ?? false);
                           });
                         },
                         child: Container(
@@ -380,22 +414,24 @@ class _HomePageState extends State<HomePage> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: thread['isFollowed']
+                            color: (thread['isFollowed'] ?? false)
                                 ? Colors.transparent
                                 : primaryBlue.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: thread['isFollowed']
+                              color: (thread['isFollowed'] ?? false)
                                   ? subTextColor
                                   : primaryBlue,
                             ),
                           ),
                           child: Text(
-                            thread['isFollowed'] ? 'Following' : '+ Follow',
+                            (thread['isFollowed'] ?? false)
+                                ? 'Following'
+                                : '+ Follow',
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: thread['isFollowed']
+                              color: (thread['isFollowed'] ?? false)
                                   ? subTextColor
                                   : primaryBlue,
                             ),
@@ -404,9 +440,9 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   Text(
-                    thread['title'],
+                    thread['title'] ?? '',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -415,7 +451,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    thread['caption'],
+                    thread['caption'] ?? '',
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
@@ -427,7 +463,7 @@ class _HomePageState extends State<HomePage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: Image.network(
-                        thread['imageUrl'],
+                        thread['imageUrl'] ?? '',
                         width: double.infinity,
                         height: 190,
                         fit: BoxFit.cover,
@@ -452,11 +488,13 @@ class _HomePageState extends State<HomePage> {
                       InkWell(
                         onTap: () {
                           setState(() {
-                            thread['isUpvoted'] = !thread['isUpvoted'];
-                            if (thread['isUpvoted']) {
-                              thread['upvotes'] += 1;
+                            bool isUp = thread['isUpvoted'] ?? false;
+                            int upvotes = thread['upvotes'] ?? 0;
+                            thread['isUpvoted'] = !isUp;
+                            if (!isUp) {
+                              thread['upvotes'] = upvotes + 1;
                             } else {
-                              thread['upvotes'] -= 1;
+                              thread['upvotes'] = upvotes - 1;
                             }
                           });
                         },
@@ -465,17 +503,17 @@ class _HomePageState extends State<HomePage> {
                             Icon(
                               Icons.arrow_upward_rounded,
                               size: 18,
-                              color: thread['isUpvoted']
+                              color: (thread['isUpvoted'] ?? false)
                                   ? primaryBlue
                                   : subTextColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'Up (${thread['upvotes']})',
+                              'Up (${thread['upvotes'] ?? 0})',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: thread['isUpvoted']
+                                color: (thread['isUpvoted'] ?? false)
                                     ? primaryBlue
                                     : subTextColor,
                               ),
@@ -494,7 +532,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${thread['replies']} Reply',
+                              '${thread['replies'] ?? 0} Reply',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: subTextColor,
@@ -506,12 +544,13 @@ class _HomePageState extends State<HomePage> {
                       InkWell(
                         onTap: () {
                           setState(() {
-                            thread['isReposted'] = !thread['isReposted'];
+                            thread['isReposted'] =
+                                !(thread['isReposted'] ?? false);
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                thread['isReposted']
+                                (thread['isReposted'] ?? false)
                                     ? 'Thread berhasil di-repost ke profilmu!'
                                     : 'Repost dibatalkan.',
                               ),
@@ -524,7 +563,7 @@ class _HomePageState extends State<HomePage> {
                             Icon(
                               Icons.repeat_rounded,
                               size: 18,
-                              color: thread['isReposted']
+                              color: (thread['isReposted'] ?? false)
                                   ? Colors.green
                                   : subTextColor,
                             ),
@@ -533,7 +572,7 @@ class _HomePageState extends State<HomePage> {
                               'Repost',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: thread['isReposted']
+                                color: (thread['isReposted'] ?? false)
                                     ? Colors.green
                                     : subTextColor,
                               ),
