@@ -4,10 +4,10 @@ Pusepuh adalah aplikasi mobile komunitas berbasis *board* dan *thread* yang dide
 
 Proyek ini dikembangkan untuk memenuhi Tugas Akhir mata kuliah Pemrograman Perangkat Bergerak.
 
-## 👥 Anggota Pengembang
+## Anggota Pengembang
 - **Hilmy Rafi** (103022400061)
 
-## ✨ Daftar Fitur
+## Daftar Fitur
 Aplikasi ini telah memenuhi spesifikasi fungsionalitas utama yang mencakup:
 1. **Multi-page Navigation**: Sistem navigasi dan *routing* yang mulus antar halaman (Home, Board, Thread, Profile).
 2. **Database & API Integration**: Penyimpanan data pengguna dan *thread* menggunakan *server-based database*.
@@ -18,8 +18,8 @@ Aplikasi ini telah memenuhi spesifikasi fungsionalitas utama yang mencakup:
 7. **Sistem Tagging Kritik**: Fitur wajib bagi kreator untuk memilih level kritik (misal: *Soft Critique, Hard Roast*) guna menjaga ekosistem yang sehat.
 8. **State Management & Error Handling**: Implementasi *Clean Architecture* untuk mengelola *state* dan penanganan *error* (seperti koneksi terputus atau data kosong) secara aman.
 
-## 📱 Demo Aplikasi
-*(Screenshot atau tautan video demo aplikasi akan ditambahkan di sini setelah tahap pengembangan selesai)*
+Demo Aplikasi
 
----
-*Dibuat dengan ❤️ untuk Program Studi S1 Rekayasa Perangkat Lunak, Fakultas Informatika, Telkom University (2026/2027).*
+
+
+*Dibuat untuk Program Studi S1 Rekayasa Perangkat Lunak, Fakultas Informatika, Telkom University (2026/2027).*
