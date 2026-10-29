@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'register_page.dart';
 
+List<Map<String, dynamic>> databaseAkun_103022400061 = [
+  {
+    'email': 'hilmyrafi@pusepuh.com',
+    'username': 'hilmyrafi',
+    'password': 'Seele2136#',
+    'topics': <String>['Melihat gambar dan media hiburan'],
+  },
+];
+
 class LoginPage extends StatefulWidget {
   final bool isDarkMode;
 
@@ -16,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   bool obscurePassword = true;
   String? errorMessage;
 
-  String? validasiPassword(String pass) {
+  String? validasiPassword_103022400061(String pass) {
     if (pass.length < 8) {
       return 'Password kurang dari 8 digit!';
     }
@@ -32,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  void prosesLogin() {
+  void prosesLogin_103022400061() {
     String userInput = userController.text.trim();
     String passInput = passwordController.text;
 
@@ -43,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    String? passError = validasiPassword(passInput);
+    String? passError = validasiPassword_103022400061(passInput);
     if (passError != null) {
       setState(() {
         errorMessage = passError;
@@ -51,13 +60,25 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    String cleanUsername = userInput.contains('@')
-        ? userInput.split('@')[0].toLowerCase()
-        : userInput;
+    Map<String, dynamic>? akunDitemukan;
+    for (var akun in databaseAkun_103022400061) {
+      if ((akun['username'] == userInput || akun['email'] == userInput) &&
+          akun['password'] == passInput) {
+        akunDitemukan = akun;
+        break;
+      }
+    }
+
+    if (akunDitemukan == null) {
+      setState(() {
+        errorMessage = 'Username atau Password salah / akun belum terdaftar!';
+      });
+      return;
+    }
 
     Navigator.pop(context, {
-      'username': cleanUsername,
-      'topics': <String>[],
+      'username': akunDitemukan['username'],
+      'topics': akunDitemukan['topics'],
     });
   }
 
@@ -211,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: prosesLogin,
+            onPressed: prosesLogin_103022400061,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
               foregroundColor: Colors.white,
