@@ -308,6 +308,7 @@ class _HomePageState extends State<HomePage> {
                   userTopics = [];
                   selectedBottomNav = 0;
                 });
+                tampilkanPopupLogin();
               },
             )
           : ListView(
