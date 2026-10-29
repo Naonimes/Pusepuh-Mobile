@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   final bool isDarkMode;
@@ -31,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final List<String> chosenTopics = [];
 
-  String? validasiPassword(String pass) {
+  String? validasiPassword_103022400061(String pass) {
     if (pass.length < 8) {
       return 'Password harus minimal 8 digit!';
     }
@@ -47,7 +48,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  String? validasiUsername(String user) {
+  String? validasiUsername_103022400061(String user) {
     if (user.isEmpty) {
       return 'Username tidak boleh kosong!';
     }
@@ -60,10 +61,14 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!user.contains('_')) {
       return 'Username diharuskan menggunakan tanda underscore (_)!';
     }
+    bool sudahTerpakai = databaseAkun_103022400061.any((akun) => akun['username'] == user);
+    if (sudahTerpakai) {
+      return 'Username ini sudah dipakai, coba nama lain!';
+    }
     return null;
   }
 
-  void lanjutKeTopik() {
+  void lanjutKeTopik_103022400061() {
     String email = emailController.text.trim();
     String user = usernameController.text.trim();
     String pass = passwordController.text;
@@ -76,7 +81,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    String? errorUser = validasiUsername(user);
+    String? errorUser = validasiUsername_103022400061(user);
     if (errorUser != null) {
       setState(() {
         errorMessage = errorUser;
@@ -84,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    String? errorPass = validasiPassword(pass);
+    String? errorPass = validasiPassword_103022400061(pass);
     if (errorPass != null) {
       setState(() {
         errorMessage = errorPass;
@@ -105,7 +110,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
   }
 
-  void lanjutKeFotoProfil() {
+  void lanjutKeFotoProfil_103022400061() {
     if (chosenTopics.isEmpty) {
       setState(() {
         errorMessage = 'Pilih minimal 1 topik yang kamu minati!';
@@ -118,7 +123,14 @@ class _RegisterPageState extends State<RegisterPage> {
     });
   }
 
-  void selesaikanRegistrasi() {
+  void selesaikanRegistrasi_103022400061() {
+    databaseAkun_103022400061.add({
+      'email': emailController.text.trim(),
+      'username': usernameController.text.trim(),
+      'password': passwordController.text,
+      'topics': List<String>.from(chosenTopics),
+    });
+
     Navigator.pop(context, {
       'username': usernameController.text.trim(),
       'topics': chosenTopics,
@@ -337,7 +349,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: lanjutKeTopik,
+              onPressed: lanjutKeTopik_103022400061,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
@@ -445,7 +457,7 @@ class _RegisterPageState extends State<RegisterPage> {
             }),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: lanjutKeFotoProfil,
+              onPressed: lanjutKeFotoProfil_103022400061,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
@@ -519,7 +531,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: selesaikanRegistrasi,
+              onPressed: selesaikanRegistrasi_103022400061,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
@@ -539,7 +551,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 10),
             TextButton(
-              onPressed: selesaikanRegistrasi,
+              onPressed: selesaikanRegistrasi_103022400061,
               child: Text(
                 'Lewati untuk sekarang',
                 style: TextStyle(
