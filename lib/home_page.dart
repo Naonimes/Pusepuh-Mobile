@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'profile_page.dart';
+import 'board_page.dart';
+import 'thread_page.dart';
+import 'data_dummy.dart'; 
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,9 +14,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool isDarkMode = false;
-  int selectedFeedTab = 0;
+  int selectedFeedTab = 0; // 0: For You, 1: Following, 2: Trending
   int selectedBottomNav = 0;
-  String selectedBoard = 'Semua';
 
   bool isLoggedIn = false;
   String loggedInUser = '';
@@ -21,122 +23,64 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> feedTabs = ['For You', 'Following', 'Trending'];
 
-  final Map<int, List<Map<String, dynamic>>> allThreads = {
-    0: [
-      {
-        'userName': 'ujangknalpot',
-        'threadName': 'p/kritik_saran',
-        'boardType': 'Asking',
-        'time': '2j yang lalu',
-        'title': 'infokan dong',
-        'caption': 'guys kira-kira ada yang kurang ga dari gambarku ini?',
-        'hasImage': true,
-        'imageUrl': 'https://preview.redd.it/my-t-m-opera-o-fanart-v0-gupydts7e93h1.jpeg?auto=webp&s=23d1b2f73eff39480c6a4467144561d8b62969b8',
-        'upvotes': 42,
-        'replies': 15,
-        'isUpvoted': false,
-        'isFollowed': false,
-        'isReposted': false,
-      },
-      {
-        'userName': 'suamisahopera',
-        'threadName': 'p/umamusume',
-        'boardType': 'Gallery',
-        'time': '3j yang lalu',
-        'title': 'tm opera o!',
-        'caption': 'kalian yang pernah gambar karakter opera o boleh di share dong :D',
-        'hasImage': true,
-        'imageUrl': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqT8zUkQh934e4HNZJ9uruqYApm2aFWNuKiCl_XNWT3pBpHp5aMGoIJnFR&s=10',
-        'upvotes': 128,
-        'replies': 34,
-        'isUpvoted': true,
-        'isFollowed': true,
-        'isReposted': false,
-      },
-    ],
-    1: [
-      {
-        'userName': 'whenyahaku21',
-        'threadName': 'p/grayscale',
-        'boardType': 'Asking',
-        'time': '2j yang lalu',
-        'title': 'tolong T_T',
-        'caption': 'cara render metode grayscale tu gimana sih? sampai sekaerang aku masih bingung, ada yang bisa kasih tips ga?',
-        'hasImage': false,
-        'imageUrl': '',
-        'upvotes': 19,
-        'replies': 8,
-        'isUpvoted': false,
-        'isFollowed': true,
-        'isReposted': false,
-      },
-      {
-        'userName': 'exoromulus',
-        'threadName': 'p/background_scene',
-        'boardType': 'Gallery',
-        'time': '4j yang lalu',
-        'title': 'background scene',
-        'caption': 'aku mau minta gambar landscape dengan background yang bentuknya tuh kaya scene di film2 / anime kaya gini, boleh di share ya karya kalian :D',
-        'hasImage': true,
-        'imageUrl': 'https://www.shutterstock.com/shutterstock/videos/1106937695/thumb/1.jpg?ip=x480',
-        'upvotes': 64,
-        'replies': 11,
-        'isUpvoted': false,
-        'isFollowed': true,
-        'isReposted': false,
-      },
-    ],
-    2: [
-      {
-        'userName': 'BayuNugraha',
-        'threadName': 'p/event_komunitas',
-        'boardType': 'Info',
-        'time': '2m yang lalu',
-        'title': 'main yuk',
-        'caption': 'info nih ada event komik di bandung hari sabtu tanggal 32 desember 2026, ini tautan lokasinya ya, gas mampir!',
-        'hasImage': false,
-        'imageUrl': '',
-        'upvotes': 310,
-        'replies': 89,
-        'isUpvoted': true,
-        'isFollowed': false,
-        'isReposted': true,
-      },
-      {
-        'userName': 'Salaluak',
-        'threadName': 'p/komik_indie',
-        'boardType': 'Info',
-        'time': '5m yang lalu',
-        'title': 'komik indie',
-        'caption': 'sekarang aplikasi ibis paint bisa sediain 3d model pose loh! tapi cuman khusus premium doang wkwk',
-        'hasImage': true,
-        'imageUrl': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGC6hUUEzDxAcxPWh-NLPaHvr6H83M39X9qU8rxbQGbbQLz0zHNrt3lmY&s=10',
-        'upvotes': 215,
-        'replies': 52,
-        'isUpvoted': false,
-        'isFollowed': true,
-        'isReposted': false,
-      },
-    ],
-  };
+  // (Variabel masterThreads sudah sukses dipindah ke data_dummy.dart!)
 
-  void terapkanTopikKeFeed(List<String> topics) {
-    if (topics.isEmpty) return;
-
-    List<Map<String, dynamic>> forYouList = allThreads[0] ?? [];
-
-    if (topics.contains('Mengetahui info update seputar dunia artist')) {
-      bool sudahAda = forYouList.any((t) => t['threadName'] == 'p/komik_indie');
-      if (!sudahAda && allThreads[2] != null && allThreads[2]!.length > 1) {
-        forYouList.insert(0, Map<String, dynamic>.from(allThreads[2]![1]));
+  void bukaHalamanBoard(String kategoriBoard) {
+    List threadsTerpilih = [];
+    for (var thread in masterThreads) {
+      if (thread['boardType'] == kategoriBoard) {
+        threadsTerpilih.add(thread);
       }
     }
 
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BoardPage(
+          boardType: kategoriBoard,
+          isDarkMode: isDarkMode,
+          boardThreads: threadsTerpilih,
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
+  }
+
+  void bukaHalamanThread(Map threadItem) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ThreadPage(
+          threadInfo: threadItem,
+          isDarkMode: isDarkMode,
+          onFollowChanged: (updatedThread, status) {
+            setState(() {
+              for (var t in masterThreads) {
+                if (t['threadName'] == updatedThread['threadName']) {
+                  t['isFollowed'] = status;
+                }
+              }
+            });
+          },
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
+  }
+
+  void terapkanTopikKeFeed(List<String> topics) {
+    if (topics.isEmpty) return;
+    if (topics.contains('Mengetahui info update seputar dunia artist')) {
+      for (var t in masterThreads) {
+        if (t['threadName'] == 'p/ibispaint') t['isFollowed'] = true;
+      }
+    }
     if (topics.contains('Melihat tutorial art') ||
         topics.contains('Mengajar artist newbie')) {
-      bool sudahAda = forYouList.any((t) => t['threadName'] == 'p/grayscale');
-      if (!sudahAda && allThreads[1] != null && allThreads[1]!.isNotEmpty) {
-        forYouList.insert(0, Map<String, dynamic>.from(allThreads[1]![0]));
+      for (var t in masterThreads) {
+        if (t['threadName'] == 'p/grayscale') t['isFollowed'] = true;
       }
     }
   }
@@ -202,11 +146,15 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
 
-                  if (hasilAuth != null && hasilAuth is Map) {
+                  if (hasilAuth != null) {
                     setState(() {
                       isLoggedIn = true;
-                      loggedInUser = hasilAuth['username'] ?? 'seniman_pusepuh';
-                      userTopics = List<String>.from(hasilAuth['topics'] ?? []);
+                      loggedInUser =
+                          (hasilAuth['username'] ?? 'seniman_pusepuh')
+                              .toString();
+                      List rawTopics = hasilAuth['topics'] ?? [];
+                      userTopics =
+                          rawTopics.map((e) => e.toString()).toList();
                       terapkanTopikKeFeed(userTopics);
                       selectedBottomNav = 2;
                     });
@@ -255,8 +203,23 @@ class _HomePageState extends State<HomePage> {
     Color borderColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    List<Map<String, dynamic>> currentThreads =
-        allThreads[selectedFeedTab] ?? [];
+    List displayedThreads = [];
+    if (selectedFeedTab == 0) {
+      displayedThreads = List.from(masterThreads);
+    } else if (selectedFeedTab == 1) {
+      for (var t in masterThreads) {
+        if (t['isFollowed'] == true) {
+          displayedThreads.add(t);
+        }
+      }
+    } else {
+      displayedThreads = List.from(masterThreads);
+      displayedThreads.sort((a, b) {
+        int upA = a['post']['upvotes'] ?? 0;
+        int upB = b['post']['upvotes'] ?? 0;
+        return upB.compareTo(upA);
+      });
+    }
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -339,14 +302,12 @@ class _HomePageState extends State<HomePage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          setState(() {
-                            selectedBoard = 'Gallery';
-                          });
+                          bukaHalamanBoard('Gallery');
                         },
                         icon: const Icon(Icons.image_outlined, size: 16),
                         label: const Text('Gallery'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
+                          backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -365,14 +326,12 @@ class _HomePageState extends State<HomePage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          setState(() {
-                            selectedBoard = 'Asking';
-                          });
+                          bukaHalamanBoard('Asking');
                         },
                         icon: const Icon(Icons.help_outline, size: 16),
                         label: const Text('Asking'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
+                          backgroundColor: Colors.redAccent,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -391,14 +350,12 @@ class _HomePageState extends State<HomePage> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          setState(() {
-                            selectedBoard = 'Info';
-                          });
+                          bukaHalamanBoard('Info');
                         },
                         icon: const Icon(Icons.campaign_outlined, size: 16),
                         label: const Text('Info'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
+                          backgroundColor: Colors.amber[700],
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 12),
@@ -462,212 +419,229 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                ...currentThreads.map((thread) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: borderColor),
-                      boxShadow: [
-                        if (!isDarkMode)
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                      ],
+                if (displayedThreads.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Center(
+                      child: Text(
+                        selectedFeedTab == 1
+                            ? 'Belum ada thread yang kamu follow.\nYuk follow thread di board pilihanmu!'
+                            : 'Tidak ada postingan.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: subTextColor, fontSize: 13),
+                      ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 18,
-                              backgroundColor: isDarkMode
-                                  ? Colors.grey[800]
-                                  : Colors.grey[200],
-                              child: Icon(
-                                Icons.person_outline_rounded,
-                                size: 22,
-                                color: subTextColor,
-                              ),
+                  )
+                else
+                  ...displayedThreads.map((threadItem) {
+                    var post = threadItem['post'];
+                    String bType = threadItem['boardType'] ?? 'Gallery';
+                    Color bColor = getBoardColor(bType);
+                    bool isFollowed = threadItem['isFollowed'] ?? false;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: borderColor),
+                        boxShadow: [
+                          if (!isDarkMode)
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    thread['userName'] ??
-                                        'User Tidak Diketahui',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: textColor,
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 18,
+                                backgroundColor: isDarkMode
+                                    ? Colors.grey[800]
+                                    : Colors.grey[200],
+                                child: Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 22,
+                                  color: subTextColor,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      post['userName'] ??
+                                          'User Tidak Diketahui',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: bColor,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        InkWell(
+                                          onTap: () =>
+                                              bukaHalamanThread(threadItem),
+                                          child: Text(
+                                            threadItem['threadName'] ??
+                                                'p/thread',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 11,
+                                              color: bColor,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '• ${post['time'] ?? 'Baru saja'}',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: subTextColor,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    threadItem['isFollowed'] = !isFollowed;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isFollowed
+                                        ? Colors.transparent
+                                        : primaryBlue.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isFollowed
+                                          ? subTextColor
+                                          : primaryBlue,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: getBoardColor(
-                                              thread['boardType']?.toString()),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        thread['threadName'] ?? 'p/thread',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 11,
-                                          color: getBoardColor(
-                                              thread['boardType']?.toString()),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '• ${thread['time'] ?? 'Baru saja'}',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: subTextColor,
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    isFollowed ? 'Following' : '+ Follow',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: isFollowed
+                                          ? subTextColor
+                                          : primaryBlue,
+                                    ),
                                   ),
-                                ],
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            post['title'] ?? '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: textColor,
                             ),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  thread['isFollowed'] =
-                                      !(thread['isFollowed'] ?? false);
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: (thread['isFollowed'] ?? false)
-                                      ? Colors.transparent
-                                      : primaryBlue.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: (thread['isFollowed'] ?? false)
-                                        ? subTextColor
-                                        : primaryBlue,
-                                  ),
-                                ),
-                                child: Text(
-                                  (thread['isFollowed'] ?? false)
-                                      ? 'Following'
-                                      : '+ Follow',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: (thread['isFollowed'] ?? false)
-                                        ? subTextColor
-                                        : primaryBlue,
-                                  ),
-                                ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            post['caption'] ?? '',
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: subTextColor,
+                            ),
+                          ),
+                          if (post['hasImage'] == true) ...[
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.network(
+                                post['imageUrl'] ?? '',
+                                width: double.infinity,
+                                height: 190,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    width: double.infinity,
+                                    height: 190,
+                                    color: isDarkMode
+                                        ? Colors.grey[800]
+                                        : Colors.grey[300],
+                                  );
+                                },
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          thread['title'] ?? '',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: textColor,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          thread['caption'] ?? '',
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.4,
-                            color: subTextColor,
-                          ),
-                        ),
-                        if (thread['hasImage'] == true) ...[
                           const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: Image.network(
-                              thread['imageUrl'] ?? '',
-                              width: double.infinity,
-                              height: 190,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: double.infinity,
-                                  height: 190,
-                                  color: isDarkMode
-                                      ? Colors.grey[800]
-                                      : Colors.grey[300],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        Divider(color: borderColor, height: 1),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  bool isUp = thread['isUpvoted'] ?? false;
-                                  int upvotes = thread['upvotes'] ?? 0;
-                                  thread['isUpvoted'] = !isUp;
-                                  if (!isUp) {
-                                    thread['upvotes'] = upvotes + 1;
-                                  } else {
-                                    thread['upvotes'] = upvotes - 1;
-                                  }
-                                });
-                              },
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.arrow_upward_rounded,
-                                    size: 18,
-                                    color: (thread['isUpvoted'] ?? false)
-                                        ? primaryBlue
-                                        : subTextColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Up (${thread['upvotes'] ?? 0})',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: (thread['isUpvoted'] ?? false)
+                          Divider(color: borderColor, height: 1),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    bool isUp = post['isUpvoted'] ?? false;
+                                    int upvotes = post['upvotes'] ?? 0;
+                                    post['isUpvoted'] = !isUp;
+                                    if (!isUp) {
+                                      post['upvotes'] = upvotes + 1;
+                                    } else {
+                                      post['upvotes'] = upvotes - 1;
+                                    }
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_upward_rounded,
+                                      size: 18,
+                                      color: (post['isUpvoted'] ?? false)
                                           ? primaryBlue
                                           : subTextColor,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Up (${post['upvotes'] ?? 0})',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: (post['isUpvoted'] ?? false)
+                                            ? primaryBlue
+                                            : subTextColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            InkWell(
-                              onTap: () {},
-                              child: Row(
+                              Row(
                                 children: [
                                   Icon(
                                     Icons.chat_bubble_outline_rounded,
@@ -676,7 +650,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    '${thread['replies'] ?? 0} Reply',
+                                    '${post['replies'] ?? 0} Reply',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: subTextColor,
@@ -684,78 +658,40 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ],
                               ),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  thread['isReposted'] =
-                                      !(thread['isReposted'] ?? false);
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      (thread['isReposted'] ?? false)
-                                          ? 'Thread berhasil di-repost ke profilmu!'
-                                          : 'Repost dibatalkan.',
-                                    ),
-                                    duration: const Duration(seconds: 1),
-                                  ),
-                                );
-                              },
-                              child: Row(
+                              Row(
                                 children: [
                                   Icon(
                                     Icons.repeat_rounded,
                                     size: 18,
-                                    color: (thread['isReposted'] ?? false)
-                                        ? Colors.green
-                                        : subTextColor,
+                                    color: subTextColor,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Repost',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: (thread['isReposted'] ?? false)
-                                          ? Colors.green
-                                          : subTextColor,
+                                      color: subTextColor,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            InkWell(
-                              onTap: () {},
-                              child: Icon(
+                              Icon(
                                 Icons.share_outlined,
                                 size: 18,
                                 color: subTextColor,
                               ),
-                            ),
-                            if (thread['hasImage'] == true)
-                              InkWell(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Mengunduh media ke penyimpanan lokal...',
-                                      ),
-                                      duration: Duration(seconds: 1),
-                                    ),
-                                  );
-                                },
-                                child: Icon(
+                              if (post['hasImage'] == true)
+                                Icon(
                                   Icons.download_rounded,
                                   size: 19,
                                   color: primaryBlue,
                                 ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
               ],
             ),
       bottomNavigationBar: Container(
