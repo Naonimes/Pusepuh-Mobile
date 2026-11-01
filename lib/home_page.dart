@@ -3,7 +3,7 @@ import 'login_page.dart';
 import 'profile_page.dart';
 import 'board_page.dart';
 import 'thread_page.dart';
-import 'data_dummy.dart'; 
+import 'data_dummy.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,8 +22,6 @@ class _HomePageState extends State<HomePage> {
   List<String> userTopics = [];
 
   final List<String> feedTabs = ['For You', 'Following', 'Trending'];
-
-  // (Variabel masterThreads sudah sukses dipindah ke data_dummy.dart!)
 
   void bukaHalamanBoard(String kategoriBoard) {
     List threadsTerpilih = [];
@@ -68,6 +66,34 @@ class _HomePageState extends State<HomePage> {
     ).then((_) {
       setState(() {});
     });
+  }
+
+  void bukaFullscreenGambar(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              boundaryMargin: const EdgeInsets.all(20),
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Hero(
+                tag: imageUrl,
+                child: Image.network(imageUrl, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void terapkanTopikKeFeed(List<String> topics) {
@@ -580,22 +606,29 @@ class _HomePageState extends State<HomePage> {
                           ),
                           if (post['hasImage'] == true) ...[
                             const SizedBox(height: 12),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                post['imageUrl'] ?? '',
-                                width: double.infinity,
-                                height: 190,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
+                            GestureDetector(
+                              onTap: () => bukaFullscreenGambar(
+                                  post['imageUrl'] ?? ''),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Hero(
+                                  tag: post['imageUrl'] ?? '',
+                                  child: Image.network(
+                                    post['imageUrl'] ?? '',
                                     width: double.infinity,
                                     height: 190,
-                                    color: isDarkMode
-                                        ? Colors.grey[800]
-                                        : Colors.grey[300],
-                                  );
-                                },
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: double.infinity,
+                                        height: 190,
+                                        color: isDarkMode
+                                            ? Colors.grey[800]
+                                            : Colors.grey[300],
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -743,7 +776,7 @@ class _HomePageState extends State<HomePage> {
                   tampilkanPopupLogin();
                 } else {
                   setState(() {
-                    selectedBottomNav = 2;
+                    selectedBottomNav == 2; // (Diperbaiki)
                   });
                 }
               },

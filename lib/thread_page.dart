@@ -27,6 +27,34 @@ class _ThreadPageState extends State<ThreadPage> {
     }
   }
 
+  void bukaFullscreenGambar(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              boundaryMargin: const EdgeInsets.all(20),
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Hero(
+                tag: imageUrl,
+                child: Image.network(imageUrl, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Color bgColor = widget.isDarkMode ? const Color(0xFF121212) : Colors.white;
@@ -277,22 +305,28 @@ class _ThreadPageState extends State<ThreadPage> {
                 ),
                 if (post['hasImage'] == true) ...[
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      post['imageUrl'] ?? '',
-                      width: double.infinity,
-                      height: 190,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                  GestureDetector(
+                    onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Hero(
+                        tag: post['imageUrl'] ?? '',
+                        child: Image.network(
+                          post['imageUrl'] ?? '',
                           width: double.infinity,
                           height: 190,
-                          color: widget.isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[300],
-                        );
-                      },
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 190,
+                              color: widget.isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[300],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ],
