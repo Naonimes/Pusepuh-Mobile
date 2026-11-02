@@ -3,7 +3,7 @@
 final List masterThreads = [
   {
     'boardType': 'Asking',
-    'threadName': 'p/kritik_saran',
+    'threadName': 'p/kritik_sarun',
     'threadDesc':
         'Wadah buat kalian yang ngerasa gambarnya masih agak miring, proporsinya berantakan, atau bingung sama pewarnaan. Bebas minta krisar di sini asal sopan ya guys!',
     'threadCreator': 'hilmyrafi',

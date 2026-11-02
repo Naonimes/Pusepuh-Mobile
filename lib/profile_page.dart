@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'data_dummy.dart'; // <--- Memanggil sumber data utama kita
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -22,66 +23,6 @@ class _ProfilePageState extends State<ProfilePage> {
   int selectedProfileTab = 0;
   final List<String> profileTabs = ['Repost', 'Thread Kamu', 'Disimpan'];
 
-  late Map<int, List<Map<String, dynamic>>> profileThreads;
-
-  @override
-  void initState() {
-    super.initState();
-    profileThreads = {
-      0: [
-        {
-          'userName': 'suamisahopera',
-          'threadName': 'p/umamusume',
-          'boardType': 'Gallery',
-          'time': '3j yang lalu',
-          'title': 'tm opera o!',
-          'caption': 'kalian yang pernah gambar karakter opera o boleh di share dong :D',
-          'hasImage': true,
-          'imageUrl': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqT8zUkQh934e4HNZJ9uruqYApm2aFWNuKiCl_XNWT3pBpHp5aMGoIJnFR&s=10',
-          'upvotes': 128,
-          'replies': 34,
-          'isUpvoted': true,
-          'isFollowed': true,
-          'isReposted': true,
-        },
-      ],
-      1: [
-        {
-          'userName': widget.userName,
-          'threadName': 'p/kritik_saran',
-          'boardType': 'Asking',
-          'time': '2j yang lalu',
-          'title': 'infokan dong',
-          'caption': 'guys kira-kira ada yang kurang ga dari gambarku ini?',
-          'hasImage': true,
-          'imageUrl': 'https://preview.redd.it/my-t-m-opera-o-fanart-v0-gupydts7e93h1.jpeg?auto=webp&s=23d1b2f73eff39480c6a4467144561d8b62969b8',
-          'upvotes': 42,
-          'replies': 15,
-          'isUpvoted': false,
-          'isFollowed': false,
-          'isReposted': false,
-        },
-      ],
-      2: [
-        {
-          'userName': 'Salaluak',
-          'threadName': 'p/komik_indie',
-          'boardType': 'Info',
-          'time': '5m yang lalu',
-          'title': 'komik indie',
-          'caption': 'sekarang aplikasi ibis paint bisa sediain 3d model pose loh! tapi cuman khusus premium doang wkwk',
-          'hasImage': true,
-          'imageUrl': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSGC6hUUEzDxAcxPWh-NLPaHvr6H83M39X9qU8rxbQGbbQLz0zHNrt3lmY&s=10',
-          'upvotes': 215,
-          'replies': 52,
-          'isUpvoted': false,
-          'isFollowed': true,
-          'isReposted': false,
-        },
-      ],
-    };
-  }
-
   Color getBoardColor(String? boardType) {
     if (boardType == 'Asking') {
       return Colors.redAccent;
@@ -92,6 +33,34 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void bukaFullscreenGambar(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              panEnabled: true,
+              boundaryMargin: const EdgeInsets.all(20),
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Hero(
+                tag: imageUrl,
+                child: Image.network(imageUrl, fit: BoxFit.contain),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Color cardColor = widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
@@ -100,8 +69,17 @@ class _ProfilePageState extends State<ProfilePage> {
     Color borderColor = widget.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    List<Map<String, dynamic>> currentList =
-        profileThreads[selectedProfileTab] ?? [];
+    // Mengambil data secara dinamis dari data_dummy.dart
+    List currentList = [];
+    if (masterThreads.isNotEmpty) {
+      if (selectedProfileTab == 0 && masterThreads.length > 2) {
+        currentList = [masterThreads[2]]; // Contoh Repost: Umamusume
+      } else if (selectedProfileTab == 1) {
+        currentList = [masterThreads[0]]; // Contoh Thread Kamu: Kritik Saran
+      } else if (selectedProfileTab == 2 && masterThreads.length > 5) {
+        currentList = [masterThreads[5]]; // Contoh Disimpan: IbisPaint
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -231,10 +209,18 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 14),
-        ...currentList.map((thread) {
+        ...currentList.map((threadItem) {
+          var post = threadItem['post'] ?? {};
+          String bType = threadItem['boardType'] ?? 'Gallery';
+          Color bColor = getBoardColor(bType);
+          
+          // Mengganti nama user menjadi nama kita saat di tab 'Thread Kamu'
           String displayUser = selectedProfileTab == 1
               ? widget.userName
-              : (thread['userName'] ?? 'User');
+              : (post['userName'] ?? 'User');
+              
+          bool isReposted = selectedProfileTab == 0; 
+
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(14),
@@ -288,24 +274,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                 width: 8,
                                 height: 8,
                                 decoration: BoxDecoration(
-                                  color: getBoardColor(
-                                      thread['boardType']?.toString()),
+                                  color: bColor,
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                thread['threadName'] ?? 'p/thread',
+                                threadItem['threadName'] ?? 'p/thread',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 11,
-                                  color: getBoardColor(
-                                      thread['boardType']?.toString()),
+                                  color: bColor,
                                 ),
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '• ${thread['time'] ?? 'Baru saja'}',
+                                '• ${post['time'] ?? 'Baru saja'}',
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: subTextColor,
@@ -320,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  thread['title'] ?? '',
+                  post['title'] ?? '',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
@@ -329,31 +313,37 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  thread['caption'] ?? '',
+                  post['caption'] ?? '',
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.4,
                     color: subTextColor,
                   ),
                 ),
-                if (thread['hasImage'] == true) ...[
+                if (post['hasImage'] == true) ...[
                   const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      thread['imageUrl'] ?? '',
-                      width: double.infinity,
-                      height: 190,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+                  GestureDetector(
+                    onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Hero(
+                        tag: post['imageUrl'] ?? '',
+                        child: Image.network(
+                          post['imageUrl'] ?? '',
                           width: double.infinity,
                           height: 190,
-                          color: widget.isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.grey[300],
-                        );
-                      },
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: double.infinity,
+                              height: 190,
+                              color: widget.isDarkMode
+                                  ? Colors.grey[800]
+                                  : Colors.grey[300],
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -363,41 +353,27 @@ class _ProfilePageState extends State<ProfilePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          bool isUp = thread['isUpvoted'] ?? false;
-                          int upvotes = thread['upvotes'] ?? 0;
-                          thread['isUpvoted'] = !isUp;
-                          if (!isUp) {
-                            thread['upvotes'] = upvotes + 1;
-                          } else {
-                            thread['upvotes'] = upvotes - 1;
-                          }
-                        });
-                      },
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.arrow_upward_rounded,
-                            size: 18,
-                            color: (thread['isUpvoted'] ?? false)
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 18,
+                          color: (post['isUpvoted'] ?? false)
+                              ? primaryBlue
+                              : subTextColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Up (${post['upvotes'] ?? 0})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: (post['isUpvoted'] ?? false)
                                 ? primaryBlue
                                 : subTextColor,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Up (${thread['upvotes'] ?? 0})',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: (thread['isUpvoted'] ?? false)
-                                  ? primaryBlue
-                                  : subTextColor,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     Row(
                       children: [
@@ -408,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${thread['replies'] ?? 0} Reply',
+                          '${post['replies'] ?? 0} Reply',
                           style: TextStyle(
                             fontSize: 12,
                             color: subTextColor,
@@ -421,18 +397,14 @@ class _ProfilePageState extends State<ProfilePage> {
                         Icon(
                           Icons.repeat_rounded,
                           size: 18,
-                          color: (thread['isReposted'] ?? false)
-                              ? Colors.green
-                              : subTextColor,
+                          color: isReposted ? Colors.green : subTextColor,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           'Repost',
                           style: TextStyle(
                             fontSize: 12,
-                            color: (thread['isReposted'] ?? false)
-                                ? Colors.green
-                                : subTextColor,
+                            color: isReposted ? Colors.green : subTextColor,
                           ),
                         ),
                       ],
@@ -442,7 +414,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       size: 18,
                       color: subTextColor,
                     ),
-                    if (thread['hasImage'] == true)
+                    if (post['hasImage'] == true)
                       Icon(
                         Icons.download_rounded,
                         size: 19,

@@ -58,8 +58,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (user != user.toLowerCase()) {
       return 'Username tidak boleh memakai huruf kapital!';
     }
-    if (!user.contains('_')) {
-      return 'Username diharuskan menggunakan tanda underscore (_)!';
+    if (!RegExp(r'^[a-z0-9_.]+$').hasMatch(user)) {
+      return 'Username hanya boleh berisi huruf kecil, angka, titik, atau underscore!';
     }
     bool sudahTerpakai = databaseAkun_103022400061.any((akun) => akun['username'] == user);
     if (sudahTerpakai) {
@@ -232,7 +232,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 14),
             Text(
-              'Username (wajib huruf kecil & underscore)',
+              'Username',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
@@ -253,7 +253,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 controller: usernameController,
                 style: TextStyle(color: textColor, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'contoh: hilmy_rafi',
+                  hintText: 'Huruf kecil, angka, titik, atau underscore',
                   hintStyle: TextStyle(color: subTextColor, fontSize: 13),
                   border: InputBorder.none,
                 ),
