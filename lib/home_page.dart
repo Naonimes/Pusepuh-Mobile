@@ -727,71 +727,74 @@ class _HomePageState extends State<HomePage> {
                   }),
               ],
             ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: cardColor,
-          border: Border(top: BorderSide(color: borderColor, width: 1)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  selectedBottomNav = 0;
-                });
-              },
-              icon: Icon(
-                Icons.home_filled,
-                size: 28,
-                color: selectedBottomNav == 0
-                    ? (isDarkMode ? Colors.white : Colors.black)
-                    : subTextColor,
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedBottomNav = 1;
-                });
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: primaryBlue,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.add,
-                  size: 26,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                if (!isLoggedIn) {
-                  tampilkanPopupLogin();
-                } else {
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            border: Border(top: BorderSide(color: borderColor, width: 1)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              IconButton(
+                onPressed: () {
                   setState(() {
-                    selectedBottomNav == 2; // (Diperbaiki)
+                    selectedBottomNav = 0;
                   });
-                }
-              },
-              child: CircleAvatar(
-                radius: 14,
-                backgroundColor:
-                    selectedBottomNav == 2 ? primaryBlue : subTextColor,
-                child: const Icon(
-                  Icons.person,
-                  size: 18,
-                  color: Colors.white,
+                },
+                icon: Icon(
+                  Icons.home_filled,
+                  size: 28,
+                  color: selectedBottomNav == 0
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : subTextColor,
                 ),
               ),
-            ),
-          ],
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    selectedBottomNav = 1;
+                  });
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: primaryBlue,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    size: 26,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  if (!isLoggedIn) {
+                    tampilkanPopupLogin();
+                  } else {
+                    setState(() {
+                      selectedBottomNav = 2;
+                    });
+                  }
+                },
+                child: CircleAvatar(
+                  radius: 14,
+                  backgroundColor:
+                      selectedBottomNav == 2 ? primaryBlue : subTextColor,
+                  child: const Icon(
+                    Icons.person,
+                    size: 18,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
