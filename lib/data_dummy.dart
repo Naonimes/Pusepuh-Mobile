@@ -10,7 +10,7 @@ final List masterThreads = [
     'threadDate': '12 Okt 2026',
     'isFollowed': false,
     'post': {
-      'userName': 'ujangknalpot',
+      'userName': 'ujangasep',
       'time': '2j yang lalu',
       'title': 'infokan dong',
       'caption': 'guys kira-kira ada yang kurang ga dari gambarku ini?',
@@ -18,7 +18,30 @@ final List masterThreads = [
       'imageUrl':
           'https://preview.redd.it/my-t-m-opera-o-fanart-v0-gupydts7e93h1.jpeg?auto=webp&s=23d1b2f73eff39480c6a4467144561d8b62969b8',
       'upvotes': 42,
-      'replies': 15,
+     'replies': 2, // <--- Ubah angka replies-nya jadi 2
+      'isReposted': false,
+      
+      // VVV TAMBAHKAN BLOK COMMENTS INI VVV
+      'comments': [
+        {
+          'id': 1,
+          'userName': 'kurator_galak',
+          'time': '1 jam lalu',
+          'text': 'Shading-nya masih terlalu kasar dan garis proporsinya belum pas di bagian poni. Perhatikan lagi sumber arah datangnya cahaya.',
+          'likes': 8,
+          'isLiked': false,
+          'replies': []
+        },
+        {
+          'id': 2,
+          'userName': 'seni_santai',
+          'time': '45 menit lalu',
+          'text': 'Pemilihan warna dasarnya udah bagus banget kok! Saranku coba pakai brush bertekstur lembut dan manfaatkan layer blend mode Multiply buat bayangan dalamnya.',
+          'likes': 15,
+          'isLiked': false,
+          'replies': []
+        }
+      ]
     }
   },
   {
