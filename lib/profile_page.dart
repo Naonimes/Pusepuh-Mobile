@@ -66,8 +66,9 @@ class _ProfilePageState extends State<ProfilePage> {
     Color borderColor = widget.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    // Hitung jumlah thread yang difollow
-    int followingCount = masterThreads.where((t) => t['isFollowed'] == true).length;
+    // Ambil daftar thread yang diikuti
+    List followedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
+    int followingCount = followedThreads.length;
     
     // Ambil data repost
     List repostedThreads = masterThreads.where((t) => t['post']['isReposted'] == true).toList();
@@ -101,7 +102,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FollowingPage(isDarkMode: widget.isDarkMode)),
+                    MaterialPageRoute(
+                      builder: (context) => FollowingPage(
+                        isDarkMode: widget.isDarkMode,
+                        followedThreads: followedThreads,
+                      ),
+                    ),
                   );
                 },
                 child: Column(
@@ -211,7 +217,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 4),
                     Text(post['caption'] ?? '', style: TextStyle(fontSize: 12, color: subTextColor)),
                     
-                    // Menampilkan Gambar di Profil jika post punya gambar
                     if (post['hasImage'] == true) ...[
                       const SizedBox(height: 12),
                       GestureDetector(

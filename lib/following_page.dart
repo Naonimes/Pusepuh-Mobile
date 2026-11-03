@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
-import 'data_dummy.dart';
+import 'thread_page.dart';
 
 class FollowingPage extends StatelessWidget {
   final bool isDarkMode;
+  final List followedThreads;
 
-  const FollowingPage({super.key, required this.isDarkMode});
+  const FollowingPage({
+    super.key,
+    required this.isDarkMode,
+    required this.followedThreads,
+  });
+
+  Color getBoardColor(String? boardType) {
+    if (boardType == 'Asking') return Colors.redAccent;
+    if (boardType == 'Info') return Colors.amber[700]!;
+    return Colors.green;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,9 +25,6 @@ class FollowingPage extends StatelessWidget {
     Color subTextColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
     Color borderColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
 
-    // Ambil semua thread yang isFollowed == true
-    List followedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
-
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -25,7 +33,12 @@ class FollowingPage extends StatelessWidget {
         iconTheme: IconThemeData(color: textColor),
         title: Text(
           'Thread yang Diikuti',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: textColor,
+          ),
         ),
       ),
       body: followedThreads.isEmpty
@@ -40,6 +53,9 @@ class FollowingPage extends StatelessWidget {
               itemCount: followedThreads.length,
               itemBuilder: (context, index) {
                 var thread = followedThreads[index];
+                String bType = thread['boardType'] ?? 'Gallery';
+                Color bColor = getBoardColor(bType);
+
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -49,17 +65,36 @@ class FollowingPage extends StatelessWidget {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                      child: const Icon(Icons.forum_rounded, color: Colors.blue),
+                      backgroundColor: bColor.withValues(alpha: 0.1),
+                      child: Icon(Icons.forum_rounded, color: bColor),
                     ),
                     title: Text(
                       thread['threadName'] ?? 'Thread',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 14),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: bColor, // Warna teks sesuai jenis board-nya!
+                      ),
                     ),
                     subtitle: Text(
-                      'Diikuti',
-                      style: TextStyle(color: Colors.green, fontSize: 12),
+                      'Board: $bType',
+                      style: TextStyle(color: subTextColor, fontSize: 12),
                     ),
+                    trailing: Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14, color: subTextColor),
+                    onTap: () {
+                      // Langsung pindah ke halaman forum thread saat ditekan
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ThreadPage(
+                            threadInfo: thread,
+                            isDarkMode: isDarkMode,
+                            onFollowChanged: (updatedThread, status) {},
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
