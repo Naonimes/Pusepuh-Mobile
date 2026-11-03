@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'data_dummy.dart';
 import 'following_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -23,6 +24,16 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   int selectedProfileTab = 0;
   final List<String> profileTabs = ['Repost', 'Thread Kamu'];
+  
+  late String currentUserName;
+  String userBio = '';
+  String userLink = '';
+
+  @override
+  void initState() {
+    super.initState();
+    currentUserName = widget.userName;
+  }
 
   Color getBoardColor(String? boardType) {
     if (boardType == 'Asking') return Colors.redAccent;
@@ -66,11 +77,8 @@ class _ProfilePageState extends State<ProfilePage> {
     Color borderColor = widget.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    // Ambil daftar thread yang diikuti
     List followedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
     int followingCount = followedThreads.length;
-    
-    // Ambil data repost
     List repostedThreads = masterThreads.where((t) => t['post']['isReposted'] == true).toList();
 
     return ListView(
@@ -91,10 +99,32 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Icon(Icons.person_outline_rounded, size: 42, color: primaryBlue),
               ),
               const SizedBox(height: 12),
+              
+              // Username
               Text(
-                widget.userName,
+                currentUserName.isEmpty ? 'User Pusepuh' : currentUserName,
                 style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
               ),
+              
+              // Bio (Muncul jika sudah diisi)
+              if (userBio.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  userBio,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: subTextColor),
+                ),
+              ],
+
+              // Link (Muncul jika sudah diisi)
+              if (userLink.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  userLink,
+                  style: TextStyle(fontSize: 12, color: primaryBlue, fontWeight: FontWeight.w500),
+                ),
+              ],
+
               const SizedBox(height: 12),
               
               // Bagian Statistik Following
@@ -125,13 +155,32 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
               const SizedBox(height: 14),
 
+              // Tombol Edit Profile
               OutlinedButton.icon(
-                onPressed: widget.onLogout,
-                icon: const Icon(Icons.logout_rounded, size: 16),
-                label: const Text('Keluar Akun'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditProfilePage(
+                        currentUserName: currentUserName,
+                        isDarkMode: widget.isDarkMode,
+                        onProfileSaved: (newName, newBio, newLink) {
+                          setState(() {
+                            currentUserName = newName;
+                            userBio = newBio;
+                            userLink = newLink;
+                          });
+                        },
+                        onLogout: widget.onLogout,
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Edit Profile'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: const BorderSide(color: Colors.redAccent),
+                  foregroundColor: primaryBlue,
+                  side: BorderSide(color: primaryBlue),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
