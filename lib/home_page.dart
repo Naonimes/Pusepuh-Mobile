@@ -3,6 +3,7 @@ import 'login_page.dart';
 import 'profile_page.dart';
 import 'board_page.dart';
 import 'thread_page.dart';
+import 'dm_page.dart';
 import 'data_dummy.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,7 +15,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool isDarkMode = false;
-  int selectedFeedTab = 0; // 0: For You, 1: Following, 2: Trending
+  int selectedFeedTab = 0;
   int selectedBottomNav = 0;
 
   bool isLoggedIn = false;
@@ -22,6 +23,15 @@ class _HomePageState extends State<HomePage> {
   List<String> userTopics = [];
 
   final List<String> feedTabs = ['For You', 'Following', 'Trending'];
+
+  void bukaHistoryMessage_103022400061() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DmPage(isDarkMode: isDarkMode),
+      ),
+    );
+  }
 
   void bukaHalamanBoard(String kategoriBoard) {
     List threadsTerpilih = [];
@@ -103,12 +113,6 @@ class _HomePageState extends State<HomePage> {
         if (t['threadName'] == 'p/ibispaint') t['isFollowed'] = true;
       }
     }
-    if (topics.contains('Melihat tutorial art') ||
-        topics.contains('Mengajar artist newbie')) {
-      for (var t in masterThreads) {
-        if (t['threadName'] == 'p/grayscale') t['isFollowed'] = true;
-      }
-    }
   }
 
   void tampilkanPopupLogin() {
@@ -130,33 +134,20 @@ class _HomePageState extends State<HomePage> {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: primaryBlue.withValues(alpha: 0.12),
-                child: Icon(
-                  Icons.lock_person_rounded,
-                  color: primaryBlue,
-                  size: 28,
-                ),
+                child: Icon(Icons.lock_person_rounded, color: primaryBlue, size: 28),
               ),
               const SizedBox(height: 12),
               Text(
                 'Login ke Pusepuh',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: textColor,
-                ),
+                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
               ),
             ],
           ),
           content: Text(
             'Silakan login terlebih dahulu agar kami bisa memuat halaman profil dan menampilkan koleksi thread kamu.',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: subTextColor,
-            ),
+            style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
@@ -175,12 +166,8 @@ class _HomePageState extends State<HomePage> {
                   if (hasilAuth != null) {
                     setState(() {
                       isLoggedIn = true;
-                      loggedInUser =
-                          (hasilAuth['username'] ?? 'seniman_pusepuh')
-                              .toString();
-                      List rawTopics = hasilAuth['topics'] ?? [];
-                      userTopics =
-                          rawTopics.map((e) => e.toString()).toList();
+                      loggedInUser = (hasilAuth['username'] ?? 'seniman_pusepuh').toString();
+                      userTopics = (hasilAuth['topics'] ?? []).map((e) => e.toString()).toList();
                       terapkanTopikKeFeed(userTopics);
                       selectedBottomNav = 2;
                     });
@@ -190,17 +177,11 @@ class _HomePageState extends State<HomePage> {
                   backgroundColor: primaryBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: const Text(
                   'Get Started',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 14),
                 ),
               ),
             ),
@@ -211,13 +192,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Color getBoardColor(String? boardType) {
-    if (boardType == 'Asking') {
-      return Colors.redAccent;
-    } else if (boardType == 'Info') {
-      return Colors.amber[700]!;
-    } else {
-      return Colors.green;
-    }
+    if (boardType == 'Asking') return Colors.redAccent;
+    if (boardType == 'Info') return Colors.amber[700]!;
+    return Colors.green;
   }
 
   @override
@@ -233,14 +210,9 @@ class _HomePageState extends State<HomePage> {
     if (selectedFeedTab == 0) {
       displayedThreads = List.from(masterThreads);
     } else if (selectedFeedTab == 1) {
-      for (var t in masterThreads) {
-        if (t['isFollowed'] == true) {
-          displayedThreads.add(t);
-        }
-      }
+      displayedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
     } else {
-      displayedThreads = List.from(masterThreads);
-      displayedThreads.sort((a, b) {
+      displayedThreads = List.from(masterThreads)..sort((a, b) {
         int upA = a['post']['upvotes'] ?? 0;
         int upB = b['post']['upvotes'] ?? 0;
         return upB.compareTo(upA);
@@ -252,24 +224,19 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         backgroundColor: bgColor,
         elevation: 0.5,
+        leading: IconButton(
+          onPressed: bukaHistoryMessage_103022400061,
+          icon: Icon(Icons.mail_outline_rounded, color: primaryBlue),
+        ),
         centerTitle: true,
         title: Text(
           'pusepuh',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            letterSpacing: -0.5,
-            color: primaryBlue,
-          ),
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 24, letterSpacing: -0.5, color: primaryBlue),
         ),
         actions: [
           IconButton(
             onPressed: () {},
-            icon: Icon(
-              Icons.notifications_none_rounded,
-              color: isDarkMode ? Colors.white : Colors.black87,
-            ),
+            icon: Icon(Icons.notifications_none_rounded, color: isDarkMode ? Colors.white : Colors.black87),
           ),
           IconButton(
             onPressed: () {
@@ -277,10 +244,7 @@ class _HomePageState extends State<HomePage> {
                 isDarkMode = !isDarkMode;
               });
             },
-            icon: Icon(
-              isDarkMode ? Icons.light_mode : Icons.dark_mode_outlined,
-              color: isDarkMode ? Colors.amber : Colors.black87,
-            ),
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode_outlined, color: isDarkMode ? Colors.amber : Colors.black87),
           ),
           const SizedBox(width: 8),
         ],
@@ -303,12 +267,11 @@ class _HomePageState extends State<HomePage> {
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
+                // Search Bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2C2C2C)
-                        : Colors.grey[100],
+                    color: isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[100],
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: borderColor),
                   ),
@@ -323,88 +286,43 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
+                // Board Buttons
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          bukaHalamanBoard('Gallery');
-                        },
+                        onPressed: () => bukaHalamanBoard('Gallery'),
                         icon: const Icon(Icons.image_outlined, size: 16),
                         label: const Text('Gallery'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          bukaHalamanBoard('Asking');
-                        },
+                        onPressed: () => bukaHalamanBoard('Asking'),
                         icon: const Icon(Icons.help_outline, size: 16),
                         label: const Text('Asking'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          bukaHalamanBoard('Info');
-                        },
+                        onPressed: () => bukaHalamanBoard('Info'),
                         icon: const Icon(Icons.campaign_outlined, size: 16),
                         label: const Text('Info'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.amber[700],
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700], foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 18),
+                
+                // Feed Tabs
                 Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: borderColor, width: 1.5),
-                    ),
-                  ),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor, width: 1.5))),
                   child: Row(
                     children: List.generate(feedTabs.length, (index) {
                       bool isSelected = selectedFeedTab == index;
@@ -417,26 +335,11 @@ class _HomePageState extends State<HomePage> {
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: isSelected
-                                      ? primaryBlue
-                                      : Colors.transparent,
-                                  width: 3,
-                                ),
-                              ),
-                            ),
+                            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isSelected ? primaryBlue : Colors.transparent, width: 3))),
                             child: Text(
                               feedTabs[index],
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.w500,
-                                fontSize: 14,
-                                color: isSelected ? primaryBlue : subTextColor,
-                              ),
+                              style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 14, color: isSelected ? primaryBlue : subTextColor),
                             ),
                           ),
                         ),
@@ -445,14 +348,13 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 14),
+
                 if (displayedThreads.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Center(
                       child: Text(
-                        selectedFeedTab == 1
-                            ? 'Belum ada thread yang kamu follow.\nYuk follow thread di board pilihanmu!'
-                            : 'Tidak ada postingan.',
+                        selectedFeedTab == 1 ? 'Belum ada thread yang kamu follow.\nYuk follow thread di board pilihanmu!' : 'Tidak ada postingan.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: subTextColor, fontSize: 13),
                       ),
@@ -464,6 +366,7 @@ class _HomePageState extends State<HomePage> {
                     String bType = threadItem['boardType'] ?? 'Gallery';
                     Color bColor = getBoardColor(bType);
                     bool isFollowed = threadItem['isFollowed'] ?? false;
+                    bool isReposted = post['isReposted'] ?? false;
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -474,11 +377,7 @@ class _HomePageState extends State<HomePage> {
                         border: Border.all(color: borderColor),
                         boxShadow: [
                           if (!isDarkMode)
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
                         ],
                       ),
                       child: Column(
@@ -489,14 +388,8 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               CircleAvatar(
                                 radius: 18,
-                                backgroundColor: isDarkMode
-                                    ? Colors.grey[800]
-                                    : Colors.grey[200],
-                                child: Icon(
-                                  Icons.person_outline_rounded,
-                                  size: 22,
-                                  color: subTextColor,
-                                ),
+                                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                                child: Icon(Icons.person_outline_rounded, size: 22, color: subTextColor),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
@@ -504,47 +397,20 @@ class _HomePageState extends State<HomePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      post['userName'] ??
-                                          'User Tidak Diketahui',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: textColor,
-                                      ),
+                                      post['userName'] ?? 'User Tidak Diketahui',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
                                     ),
                                     const SizedBox(height: 2),
                                     Row(
                                       children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: bColor,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
+                                        Container(width: 8, height: 8, decoration: BoxDecoration(color: bColor, shape: BoxShape.circle)),
                                         const SizedBox(width: 4),
                                         InkWell(
-                                          onTap: () =>
-                                              bukaHalamanThread(threadItem),
-                                          child: Text(
-                                            threadItem['threadName'] ??
-                                                'p/thread',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                              color: bColor,
-                                            ),
-                                          ),
+                                          onTap: () => bukaHalamanThread(threadItem),
+                                          child: Text(threadItem['threadName'] ?? 'p/thread', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: bColor)),
                                         ),
                                         const SizedBox(width: 6),
-                                        Text(
-                                          '• ${post['time'] ?? 'Baru saja'}',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: subTextColor,
-                                          ),
-                                        ),
+                                        Text('• ${post['time'] ?? 'Baru saja'}', style: TextStyle(fontSize: 10, color: subTextColor)),
                                       ],
                                     ),
                                   ],
@@ -557,58 +423,30 @@ class _HomePageState extends State<HomePage> {
                                   });
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: isFollowed
-                                        ? Colors.transparent
-                                        : primaryBlue.withValues(alpha: 0.1),
+                                    color: isFollowed ? Colors.transparent : primaryBlue.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: isFollowed
-                                          ? subTextColor
-                                          : primaryBlue,
-                                    ),
+                                    border: Border.all(color: isFollowed ? subTextColor : primaryBlue),
                                   ),
                                   child: Text(
                                     isFollowed ? 'Following' : '+ Follow',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: isFollowed
-                                          ? subTextColor
-                                          : primaryBlue,
-                                    ),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isFollowed ? subTextColor : primaryBlue),
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            post['title'] ?? '',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                              color: textColor,
-                            ),
-                          ),
+                          Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
                           const SizedBox(height: 6),
-                          Text(
-                            post['caption'] ?? '',
-                            style: TextStyle(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: subTextColor,
-                            ),
-                          ),
+                          Text(post['caption'] ?? '', style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor)),
+                          
+                          // Menampilkan Gambar Postingan
                           if (post['hasImage'] == true) ...[
                             const SizedBox(height: 12),
                             GestureDetector(
-                              onTap: () => bukaFullscreenGambar(
-                                  post['imageUrl'] ?? ''),
+                              onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
                                 child: Hero(
@@ -619,19 +457,14 @@ class _HomePageState extends State<HomePage> {
                                     height: 190,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: double.infinity,
-                                        height: 190,
-                                        color: isDarkMode
-                                            ? Colors.grey[800]
-                                            : Colors.grey[300],
-                                      );
+                                      return Container(width: double.infinity, height: 190, color: isDarkMode ? Colors.grey[800] : Colors.grey[300]);
                                     },
                                   ),
                                 ),
                               ),
                             ),
                           ],
+                          
                           const SizedBox(height: 12),
                           Divider(color: borderColor, height: 1),
                           const SizedBox(height: 8),
@@ -644,81 +477,39 @@ class _HomePageState extends State<HomePage> {
                                     bool isUp = post['isUpvoted'] ?? false;
                                     int upvotes = post['upvotes'] ?? 0;
                                     post['isUpvoted'] = !isUp;
-                                    if (!isUp) {
-                                      post['upvotes'] = upvotes + 1;
-                                    } else {
-                                      post['upvotes'] = upvotes - 1;
-                                    }
+                                    post['upvotes'] = isUp ? upvotes - 1 : upvotes + 1;
                                   });
                                 },
                                 child: Row(
                                   children: [
-                                    Icon(
-                                      Icons.arrow_upward_rounded,
-                                      size: 18,
-                                      color: (post['isUpvoted'] ?? false)
-                                          ? primaryBlue
-                                          : subTextColor,
-                                    ),
+                                    Icon(Icons.arrow_upward_rounded, size: 18, color: (post['isUpvoted'] ?? false) ? primaryBlue : subTextColor),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      'Up (${post['upvotes'] ?? 0})',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: (post['isUpvoted'] ?? false)
-                                            ? primaryBlue
-                                            : subTextColor,
-                                      ),
-                                    ),
+                                    Text('Up (${post['upvotes'] ?? 0})', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: (post['isUpvoted'] ?? false) ? primaryBlue : subTextColor)),
                                   ],
                                 ),
                               ),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline_rounded,
-                                    size: 17,
-                                    color: subTextColor,
-                                  ),
+                                  Icon(Icons.chat_bubble_outline_rounded, size: 17, color: subTextColor),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    '${post['replies'] ?? 0} Reply',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: subTextColor,
-                                    ),
-                                  ),
+                                  Text('${post['replies'] ?? 0} Reply', style: TextStyle(fontSize: 12, color: subTextColor)),
                                 ],
                               ),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.repeat_rounded,
-                                    size: 18,
-                                    color: subTextColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Repost',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: subTextColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Icon(
-                                Icons.share_outlined,
-                                size: 18,
-                                color: subTextColor,
-                              ),
-                              if (post['hasImage'] == true)
-                                Icon(
-                                  Icons.download_rounded,
-                                  size: 19,
-                                  color: primaryBlue,
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    post['isReposted'] = !isReposted;
+                                  });
+                                },
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.repeat_rounded, size: 18, color: isReposted ? Colors.green : subTextColor),
+                                    const SizedBox(width: 4),
+                                    Text('Repost', style: TextStyle(fontSize: 12, color: isReposted ? Colors.green : subTextColor)),
+                                  ],
                                 ),
+                              ),
+                              Icon(Icons.share_outlined, size: 18, color: subTextColor),
                             ],
                           ),
                         ],
@@ -744,13 +535,7 @@ class _HomePageState extends State<HomePage> {
                     selectedBottomNav = 0;
                   });
                 },
-                icon: Icon(
-                  Icons.home_filled,
-                  size: 28,
-                  color: selectedBottomNav == 0
-                      ? (isDarkMode ? Colors.white : Colors.black)
-                      : subTextColor,
-                ),
+                icon: Icon(Icons.home_filled, size: 28, color: selectedBottomNav == 0 ? (isDarkMode ? Colors.white : Colors.black) : subTextColor),
               ),
               GestureDetector(
                 onTap: () {
@@ -761,15 +546,8 @@ class _HomePageState extends State<HomePage> {
                 child: Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(
-                    color: primaryBlue,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.add,
-                    size: 26,
-                    color: Colors.white,
-                  ),
+                  decoration: BoxDecoration(color: primaryBlue, shape: BoxShape.circle),
+                  child: const Icon(Icons.add, size: 26, color: Colors.white),
                 ),
               ),
               GestureDetector(
@@ -784,13 +562,8 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: CircleAvatar(
                   radius: 14,
-                  backgroundColor:
-                      selectedBottomNav == 2 ? primaryBlue : subTextColor,
-                  child: const Icon(
-                    Icons.person,
-                    size: 18,
-                    color: Colors.white,
-                  ),
+                  backgroundColor: selectedBottomNav == 2 ? primaryBlue : subTextColor,
+                  child: const Icon(Icons.person, size: 18, color: Colors.white),
                 ),
               ),
             ],
