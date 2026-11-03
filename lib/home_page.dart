@@ -4,6 +4,7 @@ import 'profile_page.dart';
 import 'board_page.dart';
 import 'thread_page.dart';
 import 'dm_page.dart';
+import 'user_profile_page.dart';
 import 'data_dummy.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,17 +21,43 @@ class _HomePageState extends State<HomePage> {
 
   bool isLoggedIn = false;
   String loggedInUser = '';
-  List<String> userTopics = [];
+  List userTopics = [];
 
-  final List<String> feedTabs = ['For You', 'Following', 'Trending'];
+  final List feedTabs = ['For You', 'Following', 'Trending'];
+  List riwayatDm = [];
 
   void bukaHistoryMessage_103022400061() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DmPage(isDarkMode: isDarkMode),
+        builder: (context) => DmPage(
+          isDarkMode: isDarkMode,
+          riwayatDm: riwayatDm,
+        ),
       ),
-    );
+    ).then((_) => setState(() {}));
+  }
+
+  void bukaProfilUser_103022400061(String userName) {
+    if (userName == 'ujangasep') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserProfilePage(
+            targetUser: 'ujangasep',
+            isDarkMode: isDarkMode,
+            riwayatDm: riwayatDm,
+          ),
+        ),
+      ).then((_) => setState(() {}));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profil @$userName belum tersedia.'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   void bukaHalamanBoard(String kategoriBoard) {
@@ -106,7 +133,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void terapkanTopikKeFeed(List<String> topics) {
+  void terapkanTopikKeFeed(List topics) {
     if (topics.isEmpty) return;
     if (topics.contains('Mengetahui info update seputar dunia artist')) {
       for (var t in masterThreads) {
@@ -167,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       isLoggedIn = true;
                       loggedInUser = (hasilAuth['username'] ?? 'seniman_pusepuh').toString();
-                      userTopics = (hasilAuth['topics'] ?? []).map((e) => e.toString()).toList();
+                      userTopics = List.from(hasilAuth['topics'] ?? []);
                       terapkanTopikKeFeed(userTopics);
                       selectedBottomNav = 2;
                     });
@@ -253,7 +280,7 @@ class _HomePageState extends State<HomePage> {
           ? ProfilePage(
               userName: loggedInUser,
               isDarkMode: isDarkMode,
-              selectedTopics: userTopics,
+              selectedTopics: List.from(userTopics),
               onLogout: () {
                 setState(() {
                   isLoggedIn = false;
@@ -267,7 +294,6 @@ class _HomePageState extends State<HomePage> {
           : ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               children: [
-                // Search Bar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
@@ -287,7 +313,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Board Buttons
                 Row(
                   children: [
                     Expanded(
@@ -320,7 +345,6 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 18),
                 
-                // Feed Tabs
                 Container(
                   decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor, width: 1.5))),
                   child: Row(
@@ -367,6 +391,7 @@ class _HomePageState extends State<HomePage> {
                     Color bColor = getBoardColor(bType);
                     bool isFollowed = threadItem['isFollowed'] ?? false;
                     bool isReposted = post['isReposted'] ?? false;
+                    String creatorUser = post['userName'] ?? 'User';
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -386,19 +411,25 @@ class _HomePageState extends State<HomePage> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              CircleAvatar(
-                                radius: 18,
-                                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                                child: Icon(Icons.person_outline_rounded, size: 22, color: subTextColor),
+                              GestureDetector(
+                                onTap: () => bukaProfilUser_103022400061(creatorUser),
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                                  child: Icon(Icons.person_outline_rounded, size: 22, color: subTextColor),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      post['userName'] ?? 'User Tidak Diketahui',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
+                                    InkWell(
+                                      onTap: () => bukaProfilUser_103022400061(creatorUser),
+                                      child: Text(
+                                        creatorUser,
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
+                                      ),
                                     ),
                                     const SizedBox(height: 2),
                                     Row(
@@ -442,7 +473,6 @@ class _HomePageState extends State<HomePage> {
                           const SizedBox(height: 6),
                           Text(post['caption'] ?? '', style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor)),
                           
-                          // Menampilkan Gambar Postingan
                           if (post['hasImage'] == true) ...[
                             const SizedBox(height: 12),
                             GestureDetector(
