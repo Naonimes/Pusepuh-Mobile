@@ -89,9 +89,9 @@ class _HomePageState extends State<HomePage> {
         builder: (context) => ThreadPage(
           threadInfo: threadItem,
           isDarkMode: isDarkMode,
-          isLoggedIn: isLoggedIn, // Terhubung dengan status login
-          loggedInUser: loggedInUser, // Terhubung dengan akun login
-          onLoginRequired: tampilkanPopupLogin, // Terhubung dengan popup login
+          isLoggedIn: isLoggedIn,
+          loggedInUser: loggedInUser,
+          onLoginRequired: tampilkanPopupLogin,
           onFollowChanged: (updatedThread, status) {
             setState(() {
               for (var t in masterThreads) {
@@ -136,13 +136,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Fungsi ini sudah dinonaktifkan agar tidak ada auto-follow!
   void terapkanTopikKeFeed(List topics) {
-    if (topics.isEmpty) return;
-    if (topics.contains('Mengetahui info update seputar dunia artist')) {
-      for (var t in masterThreads) {
-        if (t['threadName'] == 'p/ibispaint') t['isFollowed'] = true;
-      }
-    }
+    // Kosongkan saja, biarkan akun baru benar-benar 0 following.
   }
 
   void tampilkanPopupLogin() {
@@ -199,7 +195,7 @@ class _HomePageState extends State<HomePage> {
                       loggedInUser = (hasilAuth['username'] ?? 'seniman_pusepuh').toString();
                       userTopics = List.from(hasilAuth['topics'] ?? []);
                       terapkanTopikKeFeed(userTopics);
-                      selectedBottomNav = 2; // Langsung ke profil agar lihat efeknya
+                      selectedBottomNav = 2;
                     });
                   }
                 },
