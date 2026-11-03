@@ -89,6 +89,9 @@ class _HomePageState extends State<HomePage> {
         builder: (context) => ThreadPage(
           threadInfo: threadItem,
           isDarkMode: isDarkMode,
+          isLoggedIn: isLoggedIn, // Terhubung dengan status login
+          loggedInUser: loggedInUser, // Terhubung dengan akun login
+          onLoginRequired: tampilkanPopupLogin, // Terhubung dengan popup login
           onFollowChanged: (updatedThread, status) {
             setState(() {
               for (var t in masterThreads) {
@@ -172,7 +175,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           content: Text(
-            'Silakan login terlebih dahulu agar kami bisa memuat halaman profil dan menampilkan koleksi thread kamu.',
+            'Silakan login terlebih dahulu agar kami bisa memuat halaman profil dan berinteraksi di aplikasi.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor),
           ),
@@ -196,7 +199,7 @@ class _HomePageState extends State<HomePage> {
                       loggedInUser = (hasilAuth['username'] ?? 'seniman_pusepuh').toString();
                       userTopics = List.from(hasilAuth['topics'] ?? []);
                       terapkanTopikKeFeed(userTopics);
-                      selectedBottomNav = 2;
+                      selectedBottomNav = 2; // Langsung ke profil agar lihat efeknya
                     });
                   }
                 },
@@ -449,6 +452,10 @@ class _HomePageState extends State<HomePage> {
                               ),
                               InkWell(
                                 onTap: () {
+                                  if (!isLoggedIn) {
+                                    tampilkanPopupLogin();
+                                    return;
+                                  }
                                   setState(() {
                                     threadItem['isFollowed'] = !isFollowed;
                                   });
@@ -503,6 +510,10 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               InkWell(
                                 onTap: () {
+                                  if (!isLoggedIn) {
+                                    tampilkanPopupLogin();
+                                    return;
+                                  }
                                   setState(() {
                                     bool isUp = post['isUpvoted'] ?? false;
                                     int upvotes = post['upvotes'] ?? 0;
@@ -518,15 +529,22 @@ class _HomePageState extends State<HomePage> {
                                   ],
                                 ),
                               ),
-                              Row(
-                                children: [
-                                  Icon(Icons.chat_bubble_outline_rounded, size: 17, color: subTextColor),
-                                  const SizedBox(width: 4),
-                                  Text('${post['replies'] ?? 0} Reply', style: TextStyle(fontSize: 12, color: subTextColor)),
-                                ],
+                              InkWell(
+                                onTap: () => bukaHalamanThread(threadItem),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.chat_bubble_outline_rounded, size: 17, color: subTextColor),
+                                    const SizedBox(width: 4),
+                                    Text('${post['replies'] ?? 0} Reply', style: TextStyle(fontSize: 12, color: subTextColor)),
+                                  ],
+                                ),
                               ),
                               InkWell(
                                 onTap: () {
+                                  if (!isLoggedIn) {
+                                    tampilkanPopupLogin();
+                                    return;
+                                  }
                                   setState(() {
                                     post['isReposted'] = !isReposted;
                                   });
