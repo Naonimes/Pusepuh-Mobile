@@ -5,6 +5,7 @@ import 'board_page.dart';
 import 'thread_page.dart';
 import 'dm_page.dart';
 import 'user_profile_page.dart';
+import 'notification_page.dart';
 import 'data_dummy.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,6 +26,9 @@ class _HomePageState extends State<HomePage> {
 
   final List feedTabs = ['For You', 'Following', 'Trending'];
   List riwayatDm = [];
+
+  final TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   void bukaHistoryMessage_103022400061() {
     Navigator.push(
@@ -75,6 +79,18 @@ class _HomePageState extends State<HomePage> {
           boardType: kategoriBoard,
           isDarkMode: isDarkMode,
           boardThreads: threadsTerpilih,
+          isLoggedIn: isLoggedIn,
+          loggedInUser: loggedInUser,
+          onLoginRequired: tampilkanPopupLogin,
+          onFollowChanged: (updatedThread, status) {
+            setState(() {
+              for (var t in masterThreads) {
+                if (t['threadName'] == updatedThread['threadName']) {
+                  t['isFollowed'] = status;
+                }
+              }
+            });
+          },
         ),
       ),
     ).then((_) {
@@ -136,10 +152,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Fungsi ini sudah dinonaktifkan agar tidak ada auto-follow!
-  void terapkanTopikKeFeed(List topics) {
-    // Kosongkan saja, biarkan akun baru benar-benar 0 following.
-  }
+  void terapkanTopikKeFeed(List topics) {}
 
   void tampilkanPopupLogin() {
     Color cardColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
@@ -171,7 +184,7 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
           content: Text(
-            'Silakan login terlebih dahulu agar kami bisa memuat halaman profil dan berinteraksi di aplikasi.',
+            'Silakan login terlebih dahulu agar kami bisa memuat halaman profil dan berinteraksi penuh.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor),
           ),
@@ -245,6 +258,16 @@ class _HomePageState extends State<HomePage> {
       });
     }
 
+    List searchResults = [];
+    if (searchQuery.isNotEmpty) {
+      searchResults = masterThreads.where((t) {
+        String tName = (t['threadName'] ?? '').toString().toLowerCase();
+        String pTitle = (t['post']['title'] ?? '').toString().toLowerCase();
+        String query = searchQuery.toLowerCase();
+        return tName.contains(query) || pTitle.contains(query);
+      }).toList();
+    }
+
     return Scaffold(
       backgroundColor: bgColor,
       appBar: AppBar(
@@ -261,7 +284,32 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              if (!isLoggedIn) {
+                tampilkanPopupLogin();
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NotificationPage(
+                      isDarkMode: isDarkMode,
+                      isLoggedIn: isLoggedIn,
+                      loggedInUser: loggedInUser,
+                      onLoginRequired: tampilkanPopupLogin,
+                      onFollowChanged: (updatedThread, status) {
+                        setState(() {
+                          for (var t in masterThreads) {
+                            if (t['threadName'] == updatedThread['threadName']) {
+                              t['isFollowed'] = status;
+                            }
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                ).then((_) => setState(() {}));
+              }
+            },
             icon: Icon(Icons.notifications_none_rounded, color: isDarkMode ? Colors.white : Colors.black87),
           ),
           IconButton(
@@ -301,78 +349,144 @@ class _HomePageState extends State<HomePage> {
                     border: Border.all(color: borderColor),
                   ),
                   child: TextField(
+                    controller: searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        searchQuery = val;
+                      });
+                    },
                     style: TextStyle(color: textColor, fontSize: 14),
                     decoration: InputDecoration(
                       icon: Icon(Icons.search, color: subTextColor),
-                      hintText: 'Cari topik atau thread (contoh: p/anatomi)...',
+                      hintText: 'Cari topik atau thread...',
                       hintStyle: TextStyle(color: subTextColor, fontSize: 13),
                       border: InputBorder.none,
+                      suffixIcon: searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, size: 18, color: subTextColor),
+                              onPressed: () {
+                                searchController.clear();
+                                setState(() {
+                                  searchQuery = '';
+                                });
+                                FocusScope.of(context).unfocus();
+                              },
+                            )
+                          : null,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
                 
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => bukaHalamanBoard('Gallery'),
-                        icon: const Icon(Icons.image_outlined, size: 16),
-                        label: const Text('Gallery'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
-                      ),
+                if (searchQuery.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 16),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => bukaHalamanBoard('Asking'),
-                        icon: const Icon(Icons.help_outline, size: 16),
-                        label: const Text('Asking'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Text('Hasil Pencarian', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: primaryBlue)),
+                        ),
+                        if (searchResults.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Text('Thread tidak ditemukan.', style: TextStyle(color: subTextColor, fontSize: 13)),
+                          )
+                        else
+                          ...searchResults.map((t) => ListTile(
+                            leading: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: getBoardColor(t['boardType']).withValues(alpha: 0.15),
+                              child: Icon(Icons.tag, size: 16, color: getBoardColor(t['boardType'])),
+                            ),
+                            title: Text(t['threadName'] ?? '', style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
+                            subtitle: Text(t['post']['title'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subTextColor, fontSize: 11)),
+                            onTap: () {
+                              FocusScope.of(context).unfocus();
+                              searchController.clear();
+                              setState(() {
+                                searchQuery = '';
+                              });
+                              bukaHalamanThread(t);
+                            },
+                          )),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => bukaHalamanBoard('Info'),
-                        icon: const Icon(Icons.campaign_outlined, size: 16),
-                        label: const Text('Info'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700], foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
+                  ),
+
+                if (searchQuery.isEmpty) const SizedBox(height: 16),
                 
-                Container(
-                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor, width: 1.5))),
-                  child: Row(
-                    children: List.generate(feedTabs.length, (index) {
-                      bool isSelected = selectedFeedTab == index;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedFeedTab = index;
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isSelected ? primaryBlue : Colors.transparent, width: 3))),
-                            child: Text(
-                              feedTabs[index],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 14, color: isSelected ? primaryBlue : subTextColor),
+                if (searchQuery.isEmpty)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => bukaHalamanBoard('Gallery'),
+                          icon: const Icon(Icons.image_outlined, size: 16),
+                          label: const Text('Gallery'),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => bukaHalamanBoard('Asking'),
+                          icon: const Icon(Icons.help_outline, size: 16),
+                          label: const Text('Asking'),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => bukaHalamanBoard('Info'),
+                          icon: const Icon(Icons.campaign_outlined, size: 16),
+                          label: const Text('Info'),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.amber[700], foregroundColor: Colors.white, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (searchQuery.isEmpty) const SizedBox(height: 18),
+                
+                if (searchQuery.isEmpty)
+                  Container(
+                    decoration: BoxDecoration(border: Border(bottom: BorderSide(color: borderColor, width: 1.5))),
+                    child: Row(
+                      children: List.generate(feedTabs.length, (index) {
+                        bool isSelected = selectedFeedTab == index;
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedFeedTab = index;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(border: Border(bottom: BorderSide(color: isSelected ? primaryBlue : Colors.transparent, width: 3))),
+                              child: Text(
+                                feedTabs[index],
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.w500, fontSize: 14, color: isSelected ? primaryBlue : subTextColor),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }),
+                        );
+                      }),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 14),
+                if (searchQuery.isEmpty) const SizedBox(height: 14),
 
-                if (displayedThreads.isEmpty)
+                if (searchQuery.isEmpty && displayedThreads.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Center(
@@ -383,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   )
-                else
+                else if (searchQuery.isEmpty)
                   ...displayedThreads.map((threadItem) {
                     var post = threadItem['post'];
                     String bType = threadItem['boardType'] ?? 'Gallery';
