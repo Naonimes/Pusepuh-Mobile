@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'thread_page.dart';
+import 'create_thread_page.dart';
 
 class BoardPage extends StatefulWidget {
   final String boardType;
@@ -36,6 +37,70 @@ class _BoardPageState extends State<BoardPage> {
     return Colors.green;
   }
 
+  String ambilPembuatThread(Map threadItem) {
+    if (threadItem['threadCreator'] != null && threadItem['threadCreator'].toString().isNotEmpty) {
+      return threadItem['threadCreator'].toString();
+    }
+    if (threadItem['post'] != null && threadItem['post']['userName'] != null) {
+      return threadItem['post']['userName'].toString();
+    }
+    return 'admin_pusepuh';
+  }
+
+  String ambilDeskripsiThread(Map threadItem) {
+    if (threadItem['threadDescription'] != null && threadItem['threadDescription'].toString().isNotEmpty) {
+      return threadItem['threadDescription'].toString();
+    }
+    String tName = (threadItem['threadName'] ?? '').toString().toLowerCase();
+    String bType = (threadItem['boardType'] ?? 'Gallery').toString();
+
+    if (tName.contains('kritik') || tName.contains('critique')) {
+      return 'Ruang diskusi untuk meminta kritik, saran konstruktif, dan evaluasi karya ilustrasi dari sesama seniman.';
+    }
+    if (tName.contains('uma')) {
+      return 'Tempat berkumpulnya para penggemar dan ilustrator untuk membagikan fanart karakter Umamusume.';
+    }
+    if (tName.contains('ibis')) {
+      return 'Pusat berbagi kode QR brush, tips, dan informasi update seputar aplikasi Ibis Paint X.';
+    }
+    if (tName.contains('background') || tName.contains('scene')) {
+      return 'Komunitas khusus berbagi referensi dan karya ilustrasi latar belakang (background/scenery) ala anime.';
+    }
+    if (tName.contains('showcase') || tName.contains('oc')) {
+      return 'Panggung pameran karya Original Character (OC) dan ilustrasi terbaikmu untuk diapresiasi bersama.';
+    }
+    return 'Ruang komunitas di board $bType untuk berdiskusi dan berbagi karya seputar topik$tName.';
+  }
+
+  void bukaFormTambahThread() async {
+    if (!widget.isLoggedIn) {
+      if (widget.onLoginRequired != null) {
+        widget.onLoginRequired!();
+      }
+      return;
+    }
+
+    final hasilThreadBaru = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateThreadPage(
+          isDarkMode: widget.isDarkMode,
+          loggedInUser: widget.loggedInUser,
+          initialBoard: widget.boardType,
+        ),
+      ),
+    );
+
+    if (hasilThreadBaru != null && hasilThreadBaru is Map) {
+      setState(() {
+        if (hasilThreadBaru['boardType'] == widget.boardType) {
+          widget.boardThreads.insert(0, hasilThreadBaru);
+        }
+      });
+      bukaHalamanThread(hasilThreadBaru);
+    }
+  }
+
   void bukaHalamanThread(Map threadItem) {
     Navigator.push(
       context,
@@ -60,34 +125,6 @@ class _BoardPageState extends State<BoardPage> {
     });
   }
 
-  void bukaFullscreenGambar(String imageUrl) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          backgroundColor: Colors.black,
-          appBar: AppBar(
-            backgroundColor: Colors.black,
-            iconTheme: const IconThemeData(color: Colors.white),
-            elevation: 0,
-          ),
-          body: Center(
-            child: InteractiveViewer(
-              panEnabled: true,
-              boundaryMargin: const EdgeInsets.all(20),
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: Hero(
-                tag: imageUrl,
-                child: Image.network(imageUrl, fit: BoxFit.contain),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     Color bgColor = widget.isDarkMode ? const Color(0xFF121212) : Colors.white;
@@ -102,9 +139,9 @@ class _BoardPageState extends State<BoardPage> {
     if (searchQuery.isNotEmpty) {
       searchResults = widget.boardThreads.where((t) {
         String tName = (t['threadName'] ?? '').toString().toLowerCase();
-        String pTitle = (t['post']['title'] ?? '').toString().toLowerCase();
+        String desc = ambilDeskripsiThread(t).toLowerCase();
         String query = searchQuery.toLowerCase();
-        return tName.contains(query) || pTitle.contains(query);
+        return tName.contains(query) || desc.contains(query);
       }).toList();
     }
 
@@ -123,6 +160,19 @@ class _BoardPageState extends State<BoardPage> {
             color: bColor,
           ),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton.icon(
+              onPressed: bukaFormTambahThread,
+              icon: Icon(Icons.add_circle_outline_rounded, size: 18, color: bColor),
+              label: Text(
+                'Thread',
+                style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 13, color: bColor),
+              ),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -144,7 +194,7 @@ class _BoardPageState extends State<BoardPage> {
               style: TextStyle(color: textColor, fontSize: 14),
               decoration: InputDecoration(
                 icon: Icon(Icons.search, color: subTextColor),
-                hintText: 'Cari di board ${widget.boardType}...',
+                hintText: 'Cari thread di board ${widget.boardType}...',
                 hintStyle: TextStyle(color: subTextColor, fontSize: 13),
                 border: InputBorder.none,
                 suffixIcon: searchQuery.isNotEmpty
@@ -194,7 +244,7 @@ class _BoardPageState extends State<BoardPage> {
                         child: Icon(Icons.tag, size: 16, color: bColor),
                       ),
                       title: Text(t['threadName'] ?? '', style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold)),
-                      subtitle: Text(t['post']['title'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subTextColor, fontSize: 11)),
+                      subtitle: Text(ambilDeskripsiThread(t), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: subTextColor, fontSize: 11)),
                       onTap: () {
                         FocusScope.of(context).unfocus();
                         searchController.clear();
@@ -215,181 +265,100 @@ class _BoardPageState extends State<BoardPage> {
               padding: const EdgeInsets.symmetric(vertical: 40),
               child: Center(
                 child: Text(
-                  'Belum ada postingan di Board ini.',
+                  'Belum ada thread di Board ini.',
                   style: TextStyle(color: subTextColor, fontSize: 13),
                 ),
               ),
             )
           else if (searchQuery.isEmpty)
             ...widget.boardThreads.map((threadItem) {
-              var post = threadItem['post'];
               bool isFollowed = threadItem['isFollowed'] ?? false;
-              bool isReposted = post['isReposted'] ?? false;
-              String creatorUser = post['userName'] ?? 'User';
+              String threadName = threadItem['threadName'] ?? 'p/thread';
+              String creator = ambilPembuatThread(threadItem);
+              String threadDesc = ambilDeskripsiThread(threadItem);
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: borderColor),
-                  boxShadow: [
-                    if (!widget.isDarkMode)
-                      BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8, offset: const Offset(0, 3)),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                          child: Icon(Icons.person_outline_rounded, size: 22, color: subTextColor),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                creatorUser,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: [
-                                  Container(width: 8, height: 8, decoration: BoxDecoration(color: bColor, shape: BoxShape.circle)),
-                                  const SizedBox(width: 4),
-                                  InkWell(
-                                    onTap: () => bukaHalamanThread(threadItem),
-                                    child: Text(threadItem['threadName'] ?? 'p/thread', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: bColor)),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text('• ${post['time'] ?? 'Baru saja'}', style: TextStyle(fontSize: 10, color: subTextColor)),
-                                ],
-                              ),
-                            ],
+              return InkWell(
+                onTap: () => bukaHalamanThread(threadItem),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: borderColor),
+                    boxShadow: [
+                      if (!widget.isDarkMode)
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: bColor.withValues(alpha: 0.15),
+                            child: Icon(Icons.tag, color: bColor, size: 22),
                           ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            if (!widget.isLoggedIn) {
-                              if (widget.onLoginRequired != null) {
-                                widget.onLoginRequired!();
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  threadName,
+                                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Dibuat oleh @$creator',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: bColor),
+                                ),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              if (!widget.isLoggedIn) {
+                                if (widget.onLoginRequired != null) {
+                                  widget.onLoginRequired!();
+                                }
+                                return;
                               }
-                              return;
-                            }
-                            setState(() {
-                              threadItem['isFollowed'] = !isFollowed;
-                              if (widget.onFollowChanged != null) {
-                                widget.onFollowChanged!(threadItem, !isFollowed);
-                              }
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isFollowed ? Colors.transparent : primaryBlue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: isFollowed ? subTextColor : primaryBlue),
-                            ),
-                            child: Text(
-                              isFollowed ? 'Following' : '+ Follow',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isFollowed ? subTextColor : primaryBlue),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
-                    const SizedBox(height: 6),
-                    Text(post['caption'] ?? '', style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor)),
-                    if (post['hasImage'] == true) ...[
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Hero(
-                            tag: 'board_${post['imageUrl']}',
-                            child: Image.network(
-                              post['imageUrl'] ?? '',
-                              width: double.infinity,
-                              height: 190,
-                              fit: BoxFit.cover,
+                              setState(() {
+                                threadItem['isFollowed'] = !isFollowed;
+                                if (widget.onFollowChanged != null) {
+                                  widget.onFollowChanged!(threadItem, !isFollowed);
+                                }
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isFollowed ? Colors.transparent : primaryBlue.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: isFollowed ? subTextColor : primaryBlue),
+                              ),
+                              child: Text(
+                                isFollowed ? 'Following' : '+ Follow',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isFollowed ? subTextColor : primaryBlue),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Divider(color: borderColor, height: 1),
+                      const SizedBox(height: 8),
+                      Text(
+                        threadDesc,
+                        style: TextStyle(fontSize: 12.5, color: subTextColor, height: 1.4),
                       ),
                     ],
-                    const SizedBox(height: 12),
-                    Divider(color: borderColor, height: 1),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            if (!widget.isLoggedIn) {
-                              if (widget.onLoginRequired != null) {
-                                widget.onLoginRequired!();
-                              }
-                              return;
-                            }
-                            setState(() {
-                              bool isUp = post['isUpvoted'] ?? false;
-                              int upvotes = post['upvotes'] ?? 0;
-                              post['isUpvoted'] = !isUp;
-                              post['upvotes'] = isUp ? upvotes - 1 : upvotes + 1;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Icon(Icons.arrow_upward_rounded, size: 18, color: (post['isUpvoted'] ?? false) ? primaryBlue : subTextColor),
-                              const SizedBox(width: 4),
-                              Text('Up (${post['upvotes'] ?? 0})', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: (post['isUpvoted'] ?? false) ? primaryBlue : subTextColor)),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => bukaHalamanThread(threadItem),
-                          child: Row(
-                            children: [
-                              Icon(Icons.chat_bubble_outline_rounded, size: 17, color: subTextColor),
-                              const SizedBox(width: 4),
-                              Text('${post['replies'] ?? 0} Reply', style: TextStyle(fontSize: 12, color: subTextColor)),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {
-                            if (!widget.isLoggedIn) {
-                              if (widget.onLoginRequired != null) {
-                                widget.onLoginRequired!();
-                              }
-                              return;
-                            }
-                            setState(() {
-                              post['isReposted'] = !isReposted;
-                            });
-                          },
-                          child: Row(
-                            children: [
-                              Icon(Icons.repeat_rounded, size: 18, color: isReposted ? Colors.green : subTextColor),
-                              const SizedBox(width: 4),
-                              Text('Repost', style: TextStyle(fontSize: 12, color: isReposted ? Colors.green : subTextColor)),
-                            ],
-                          ),
-                        ),
-                        Icon(Icons.share_outlined, size: 18, color: subTextColor),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               );
             }),
