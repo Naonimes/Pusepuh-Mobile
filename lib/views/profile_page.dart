@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'data_dummy.dart';
 import 'following_page.dart';
 import 'edit_profile_page.dart';
+import 'thread_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userName;
@@ -39,6 +40,31 @@ class _ProfilePageState extends State<ProfilePage> {
     if (boardType == 'Asking') return Colors.redAccent;
     if (boardType == 'Info') return Colors.amber[700]!;
     return Colors.green;
+  }
+
+  void bukaHalamanThread(Map threadItem) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ThreadPage(
+          threadInfo: threadItem,
+          isDarkMode: widget.isDarkMode,
+          isLoggedIn: true,
+          loggedInUser: currentUserName,
+          onFollowChanged: (updatedThread, status) {
+            setState(() {
+              for (var t in masterThreads) {
+                if (t['threadName'] == updatedThread['threadName']) {
+                  t['isFollowed'] = status;
+                }
+              }
+            });
+          },
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
   }
 
   void bukaFullscreenGambar(String imageUrl) {
@@ -79,7 +105,29 @@ class _ProfilePageState extends State<ProfilePage> {
 
     List followedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
     int followingCount = followedThreads.length;
-    List repostedThreads = masterThreads.where((t) => t['post']['isReposted'] == true).toList();
+
+    List repostedItems = [];
+    List myCreatedItems = [];
+
+    for (var t in masterThreads) {
+      List threadPosts = t['posts'] ?? [t['post']];
+      for (var p in threadPosts) {
+        if (p != null) {
+          if (p['isReposted'] == true) {
+            repostedItems.add({
+              'thread': t,
+              'post': p,
+            });
+          }
+          if (p['userName'] == currentUserName || p['userName'] == widget.userName) {
+            myCreatedItems.add({
+              'thread': t,
+              'post': p,
+            });
+          }
+        }
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -99,14 +147,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Icon(Icons.person_outline_rounded, size: 42, color: primaryBlue),
               ),
               const SizedBox(height: 12),
-              
-              // Username
               Text(
                 currentUserName.isEmpty ? 'User Pusepuh' : currentUserName,
                 style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
               ),
-              
-              // Bio (Muncul jika sudah diisi)
               if (userBio.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 Text(
@@ -115,8 +159,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(fontSize: 13, color: subTextColor),
                 ),
               ],
-
-              // Link (Muncul jika sudah diisi)
               if (userLink.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -124,10 +166,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: TextStyle(fontSize: 12, color: primaryBlue, fontWeight: FontWeight.w500),
                 ),
               ],
-
               const SizedBox(height: 12),
-              
-              // Bagian Statistik Following
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -138,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         followedThreads: followedThreads,
                       ),
                     ),
-                  );
+                  ).then((_) => setState(() {}));
                 },
                 child: Column(
                   children: [
@@ -154,8 +193,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Tombol Edit Profile
               OutlinedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -221,10 +258,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 14),
-        
-        // Tampilan Tab
         if (selectedProfileTab == 0) ...[
-          if (repostedThreads.isEmpty)
+          if (repostedItems.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 30),
               child: Center(
@@ -232,8 +267,9 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             )
           else
-            ...repostedThreads.map((threadItem) {
-              var post = threadItem['post'] ?? {};
+            ...repostedItems.map((item) {
+              var threadItem = item['thread'];
+              var post = item['post'] ?? {};
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
@@ -256,16 +292,18 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(width: 8),
                         Text(post['userName'] ?? 'User', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textColor)),
                         const SizedBox(width: 8),
-                        Icon(Icons.repeat_rounded, size: 14, color: Colors.green),
+                        const Icon(Icons.repeat_rounded, size: 14, color: Colors.green),
                         const SizedBox(width: 4),
-                        Text('Direpost', style: TextStyle(fontSize: 10, color: Colors.green)),
+                        const Text('Direpost', style: TextStyle(fontSize: 10, color: Colors.green)),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+                    InkWell(
+                      onTap: () => bukaHalamanThread(threadItem),
+                      child: Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+                    ),
                     const SizedBox(height: 4),
                     Text(post['caption'] ?? '', style: TextStyle(fontSize: 12, color: subTextColor)),
-                    
                     if (post['hasImage'] == true) ...[
                       const SizedBox(height: 12),
                       GestureDetector(
@@ -273,7 +311,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Hero(
-                            tag: 'profile_${post['imageUrl']}',
+                            tag: 'profile_repost_${post['imageUrl']}',
                             child: Image.network(
                               post['imageUrl'] ?? '',
                               width: double.infinity,
@@ -292,12 +330,88 @@ class _ProfilePageState extends State<ProfilePage> {
               );
             })
         ] else ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30),
-            child: Center(
-              child: Text('Belum ada thread yang kamu buat.', style: TextStyle(color: subTextColor, fontSize: 13)),
-            ),
-          )
+          if (myCreatedItems.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 30),
+              child: Center(
+                child: Text('Belum ada postingan atau thread yang kamu buat.', style: TextStyle(color: subTextColor, fontSize: 13)),
+              ),
+            )
+          else
+            ...myCreatedItems.map((item) {
+              var threadItem = item['thread'];
+              var post = item['post'] ?? {};
+              String bType = threadItem['boardType'] ?? 'Gallery';
+              Color bColor = getBoardColor(bType);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                          child: Icon(Icons.person, size: 16, color: primaryBlue),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(post['userName'] ?? 'User', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textColor)),
+                              const SizedBox(width: 6),
+                              Container(width: 6, height: 6, decoration: BoxDecoration(color: bColor, shape: BoxShape.circle)),
+                              const SizedBox(width: 4),
+                              InkWell(
+                                onTap: () => bukaHalamanThread(threadItem),
+                                child: Text(threadItem['threadName'] ?? 'p/thread', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: bColor)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(post['time'] ?? 'Baru saja', style: TextStyle(fontSize: 10, color: subTextColor)),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      onTap: () => bukaHalamanThread(threadItem),
+                      child: Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(post['caption'] ?? '', style: TextStyle(fontSize: 12, color: subTextColor)),
+                    if (post['hasImage'] == true) ...[
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Hero(
+                            tag: 'profile_my_${post['imageUrl']}',
+                            child: Image.network(
+                              post['imageUrl'] ?? '',
+                              width: double.infinity,
+                              height: 190,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(width: double.infinity, height: 190, color: widget.isDarkMode ? Colors.grey[800] : Colors.grey[300]);
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            })
         ],
       ],
     );

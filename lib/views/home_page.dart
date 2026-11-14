@@ -6,6 +6,8 @@ import 'thread_page.dart';
 import 'dm_page.dart';
 import 'user_profile_page.dart';
 import 'notification_page.dart';
+import 'create_thread_page.dart';
+import 'create_post_page.dart';
 import 'data_dummy.dart';
 
 class HomePage extends StatefulWidget {
@@ -122,6 +124,101 @@ class _HomePageState extends State<HomePage> {
     ).then((_) {
       setState(() {});
     });
+  }
+
+  void tampilkanPopupTambah_103022400061() {
+    if (!isLoggedIn) {
+      tampilkanPopupLogin();
+      return;
+    }
+
+    Color cardColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    Color textColor = isDarkMode ? Colors.white : Colors.black87;
+    Color subTextColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+    Color primaryBlue = const Color(0xFF2563EB);
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: cardColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Mulai Berkarya',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Pilih jenis konten yang ingin kamu bagikan ke komunitas Pusepuh:',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12.5, color: subTextColor),
+              ),
+              const SizedBox(height: 18),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: primaryBlue.withValues(alpha: 0.4)),
+                ),
+                leading: CircleAvatar(
+                  backgroundColor: primaryBlue.withValues(alpha: 0.12),
+                  child: Icon(Icons.forum_outlined, color: primaryBlue),
+                ),
+                title: Text('Buat Thread Baru', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+                subtitle: Text('Buka ruang diskusi baru (p/thread)', style: TextStyle(fontSize: 11, color: subTextColor)),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final newThread = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreateThreadPage(
+                        isDarkMode: isDarkMode,
+                        loggedInUser: loggedInUser,
+                      ),
+                    ),
+                  );
+                  if (newThread != null && newThread is Map) {
+                    setState(() {});
+                    bukaHalamanThread(newThread);
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.green.withValues(alpha: 0.4)),
+                ),
+                leading: CircleAvatar(
+                  backgroundColor: Colors.green.withValues(alpha: 0.12),
+                  child: const Icon(Icons.post_add_rounded, color: Colors.green),
+                ),
+                title: Text('Buat Postingan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
+                subtitle: Text('Upload karya atau pertanyaan ke thread', style: TextStyle(fontSize: 11, color: subTextColor)),
+                onTap: () async {
+                  Navigator.pop(dialogContext);
+                  final targetThread = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CreatePostPage(
+                        isDarkMode: isDarkMode,
+                        loggedInUser: loggedInUser,
+                      ),
+                    ),
+                  );
+                  if (targetThread != null && targetThread is Map) {
+                    setState(() {});
+                    bukaHalamanThread(targetThread);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void bukaFullscreenGambar(String imageUrl) {
@@ -245,13 +342,22 @@ class _HomePageState extends State<HomePage> {
     Color borderColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    List displayedThreads = [];
-    if (selectedFeedTab == 0) {
-      displayedThreads = List.from(masterThreads);
-    } else if (selectedFeedTab == 1) {
-      displayedThreads = masterThreads.where((t) => t['isFollowed'] == true).toList();
-    } else {
-      displayedThreads = List.from(masterThreads)..sort((a, b) {
+    List feedItems = [];
+    for (var t in masterThreads) {
+      if (selectedFeedTab == 1 && t['isFollowed'] != true) {
+        continue;
+      }
+      List threadPosts = t['posts'] ?? [t['post']];
+      for (var p in threadPosts) {
+        feedItems.add({
+          'thread': t,
+          'post': p,
+        });
+      }
+    }
+
+    if (selectedFeedTab == 2) {
+      feedItems.sort((a, b) {
         int upA = a['post']['upvotes'] ?? 0;
         int upB = b['post']['upvotes'] ?? 0;
         return upB.compareTo(upA);
@@ -486,7 +592,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 if (searchQuery.isEmpty) const SizedBox(height: 14),
 
-                if (searchQuery.isEmpty && displayedThreads.isEmpty)
+                if (searchQuery.isEmpty && feedItems.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 40),
                     child: Center(
@@ -498,8 +604,9 @@ class _HomePageState extends State<HomePage> {
                     ),
                   )
                 else if (searchQuery.isEmpty)
-                  ...displayedThreads.map((threadItem) {
-                    var post = threadItem['post'];
+                  ...feedItems.map((item) {
+                    Map threadItem = item['thread'];
+                    Map post = item['post'];
                     String bType = threadItem['boardType'] ?? 'Gallery';
                     Color bColor = getBoardColor(bType);
                     bool isFollowed = threadItem['isFollowed'] ?? false;
@@ -596,17 +703,14 @@ class _HomePageState extends State<HomePage> {
                               onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: Hero(
-                                  tag: post['imageUrl'] ?? '',
-                                  child: Image.network(
-                                    post['imageUrl'] ?? '',
-                                    width: double.infinity,
-                                    height: 190,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(width: double.infinity, height: 190, color: isDarkMode ? Colors.grey[800] : Colors.grey[300]);
-                                    },
-                                  ),
+                                child: Image.network(
+                                  post['imageUrl'] ?? '',
+                                  width: double.infinity,
+                                  height: 190,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(width: double.infinity, height: 190, color: isDarkMode ? Colors.grey[800] : Colors.grey[300]);
+                                  },
                                 ),
                               ),
                             ),
@@ -696,11 +800,7 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(Icons.home_filled, size: 28, color: selectedBottomNav == 0 ? (isDarkMode ? Colors.white : Colors.black) : subTextColor),
               ),
               GestureDetector(
-                onTap: () {
-                  setState(() {
-                    selectedBottomNav = 1;
-                  });
-                },
+                onTap: tampilkanPopupTambah_103022400061,
                 child: Container(
                   width: 44,
                   height: 44,

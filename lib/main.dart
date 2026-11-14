@@ -1,5 +1,7 @@
+// lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:pusepuh_mobile/home_page.dart';
+import 'package:get/get.dart'; // Import GetX
+import 'views/home_page.dart'; // Sesuaikan path
 
 void main() {
   runApp(const PusepuhApp());
@@ -10,7 +12,8 @@ class PusepuhApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Ubah MaterialApp menjadi GetMaterialApp
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'pusepuh',
       theme: ThemeData(
