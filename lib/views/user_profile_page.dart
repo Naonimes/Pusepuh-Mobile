@@ -1,24 +1,18 @@
+// lib/views/user_profile_page.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../models/data_dummy.dart';
+import '../controllers/home_controller.dart';
 import 'chat_room_page.dart';
-import 'data_dummy.dart';
 
-class UserProfilePage extends StatefulWidget {
+class UserProfilePage extends StatelessWidget {
   final String targetUser;
   final bool isDarkMode;
-  final List riwayatDm;
 
-  const UserProfilePage({
-    super.key,
-    required this.targetUser,
-    required this.isDarkMode,
-    required this.riwayatDm,
-  });
+  UserProfilePage({super.key, required this.targetUser, required this.isDarkMode});
 
-  @override
-  State<UserProfilePage> createState() => _UserProfilePageState();
-}
+  final HomeController homeC = Get.find<HomeController>();
 
-class _UserProfilePageState extends State<UserProfilePage> {
   Color getBoardColor(String? boardType) {
     if (boardType == 'Asking') return Colors.redAccent;
     if (boardType == 'Info') return Colors.amber[700]!;
@@ -27,8 +21,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   void bukaChat() async {
     Map? existingRoom;
-    for (var room in widget.riwayatDm) {
-      if (room['username'] == widget.targetUser) {
+    for (var room in homeC.riwayatDm) {
+      if (room['username'] == targetUser) {
         existingRoom = room;
         break;
       }
@@ -39,77 +33,56 @@ class _UserProfilePageState extends State<UserProfilePage> {
       currentMessages = List.from(existingRoom['messages'] ?? []);
     }
 
-    final hasilChat = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChatRoomPage(
-          targetUser: widget.targetUser,
-          isDarkMode: widget.isDarkMode,
+    final hasilChat = await Get.to(() => ChatRoomPage(
+          targetUser: targetUser,
+          isDarkMode: isDarkMode,
           existingMessages: currentMessages,
-        ),
-      ),
-    );
+        ));
 
     if (hasilChat != null && hasilChat is List) {
       if (hasilChat.isNotEmpty) {
-        setState(() {
-          if (existingRoom != null) {
-            existingRoom['messages'] = hasilChat;
-            existingRoom['lastMessage'] = hasilChat.last['text'] ?? '';
-            existingRoom['time'] = hasilChat.last['time'] ?? '';
-          } else {
-            widget.riwayatDm.add({
-              'username': widget.targetUser,
-              'lastMessage': hasilChat.last['text'] ?? '',
-              'time': hasilChat.last['time'] ?? '',
-              'messages': hasilChat,
-            });
-          }
-        });
+        if (existingRoom != null) {
+          existingRoom['messages'] = hasilChat;
+          existingRoom['lastMessage'] = hasilChat.last['text'] ?? '';
+          existingRoom['time'] = hasilChat.last['time'] ?? '';
+        } else {
+          homeC.riwayatDm.add({
+            'username': targetUser,
+            'lastMessage': hasilChat.last['text'] ?? '',
+            'time': hasilChat.last['time'] ?? '',
+            'messages': hasilChat,
+          });
+        }
+        homeC.riwayatDm.refresh(); // Trigger update UI riwayat DM
       }
     }
   }
 
   void bukaFullscreenGambar(String imageUrl) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
+    Get.to(() => Scaffold(
           backgroundColor: Colors.black,
-          appBar: AppBar(
-              backgroundColor: Colors.black,
-              iconTheme: const IconThemeData(color: Colors.white),
-              elevation: 0),
+          appBar: AppBar(backgroundColor: Colors.black, iconTheme: const IconThemeData(color: Colors.white), elevation: 0),
           body: Center(
             child: InteractiveViewer(
-              panEnabled: true,
-              boundaryMargin: const EdgeInsets.all(20),
-              minScale: 0.5,
-              maxScale: 4.0,
-              child: Hero(
-                  tag: imageUrl,
-                  child: Image.network(imageUrl, fit: BoxFit.contain)),
+              panEnabled: true, boundaryMargin: const EdgeInsets.all(20), minScale: 0.5, maxScale: 4.0,
+              child: Hero(tag: imageUrl, child: Image.network(imageUrl, fit: BoxFit.contain)),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor = widget.isDarkMode ? const Color(0xFF121212) : Colors.white;
-    Color cardColor = widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-    Color textColor = widget.isDarkMode ? Colors.white : Colors.black87;
-    Color subTextColor =
-        widget.isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
-    Color borderColor =
-        widget.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
+    Color bgColor = isDarkMode ? const Color(0xFF121212) : Colors.white;
+    Color cardColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    Color textColor = isDarkMode ? Colors.white : Colors.black87;
+    Color subTextColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+    Color borderColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
     List userPosts = [];
     for (var t in masterThreads) {
-      if (t['post']['userName'] == widget.targetUser) {
+      if (t['post']['userName'] == targetUser) {
         userPosts.add(t);
       }
     }
@@ -120,80 +93,35 @@ class _UserProfilePageState extends State<UserProfilePage> {
         backgroundColor: bgColor,
         elevation: 0.5,
         iconTheme: IconThemeData(color: textColor),
-        title: Text(
-          '@${widget.targetUser}',
-          style: TextStyle(
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: textColor),
-        ),
+        title: Text('@$targetUser', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: borderColor),
-            ),
+            decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: borderColor)),
             child: Column(
               children: [
-                CircleAvatar(
-                  radius: 40,
-                  backgroundColor:
-                      widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                  child: Icon(Icons.person, size: 45, color: primaryBlue),
-                ),
+                CircleAvatar(radius: 40, backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200], child: Icon(Icons.person, size: 45, color: primaryBlue)),
                 const SizedBox(height: 12),
-                Text(
-                  widget.targetUser,
-                  style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: textColor),
-                ),
+                Text(targetUser, style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor)),
                 const SizedBox(height: 6),
-                Text(
-                  'Pemula digital art yang lagi berjuang belajar shading rambut anime! 🎨✨',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: subTextColor),
-                ),
+                Text('Pemula digital art yang lagi berjuang belajar shading rambut anime! 🎨✨', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: subTextColor)),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: bukaChat,
-                  icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                  label: const Text('Kirim Pesan'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
+                  icon: const Icon(Icons.mail_outline_rounded, size: 18), label: const Text('Kirim Pesan'),
+                  style: ElevatedButton.styleFrom(backgroundColor: primaryBlue, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Postingan ${widget.targetUser}',
-            style: TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 15, color: textColor),
-          ),
+          Text('Postingan $targetUser', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
           const SizedBox(height: 12),
           if (userPosts.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text('Belum ada postingan.',
-                    style: TextStyle(color: subTextColor, fontSize: 13)),
-              ),
-            )
+            Center(child: Padding(padding: const EdgeInsets.all(20.0), child: Text('Belum ada postingan.', style: TextStyle(color: subTextColor, fontSize: 13))))
           else
             ...userPosts.map((threadItem) {
               var post = threadItem['post'];
@@ -203,52 +131,28 @@ class _UserProfilePageState extends State<UserProfilePage> {
               return Container(
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: borderColor),
-                ),
+                decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: borderColor)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: Colors.grey[200],
-                          child:
-                              Icon(Icons.person, size: 18, color: subTextColor),
-                        ),
+                        CircleAvatar(radius: 16, backgroundColor: Colors.grey[200], child: Icon(Icons.person, size: 18, color: subTextColor)),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(widget.targetUser,
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: textColor)),
+                              Text(targetUser, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor)),
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                          color: bColor,
-                                          shape: BoxShape.circle)),
+                                  Container(width: 8, height: 8, decoration: BoxDecoration(color: bColor, shape: BoxShape.circle)),
                                   const SizedBox(width: 4),
-                                  Text(threadItem['threadName'] ?? 'p/thread',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 11,
-                                          color: bColor)),
+                                  Text(threadItem['threadName'] ?? 'p/thread', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 11, color: bColor)),
                                   const SizedBox(width: 6),
-                                  Text('• ${post['time'] ?? ''}',
-                                      style: TextStyle(
-                                          fontSize: 10, color: subTextColor)),
+                                  Text('• ${post['time'] ?? ''}', style: TextStyle(fontSize: 10, color: subTextColor)),
                                 ],
                               ),
                             ],
@@ -257,32 +161,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Text(post['title'] ?? '',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                            color: textColor)),
+                    Text(post['title'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: textColor)),
                     const SizedBox(height: 6),
-                    Text(post['caption'] ?? '',
-                        style: TextStyle(
-                            fontSize: 13, height: 1.4, color: subTextColor)),
+                    Text(post['caption'] ?? '', style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor)),
                     if (post['hasImage'] == true) ...[
                       const SizedBox(height: 12),
                       GestureDetector(
-                        onTap: () =>
-                            bukaFullscreenGambar(post['imageUrl'] ?? ''),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Hero(
-                            tag: 'user_${post['imageUrl']}',
-                            child: Image.network(
-                              post['imageUrl'] ?? '',
-                              width: double.infinity,
-                              height: 190,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                        onTap: () => bukaFullscreenGambar(post['imageUrl'] ?? ''),
+                        child: ClipRRect(borderRadius: BorderRadius.circular(10), child: Hero(tag: 'user_${post['imageUrl']}', child: Image.network(post['imageUrl'] ?? '', width: double.infinity, height: 190, fit: BoxFit.cover))),
                       ),
                     ],
                   ],

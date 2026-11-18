@@ -1,15 +1,17 @@
+// lib/views/following_page.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/profile_controller.dart';
+import '../controllers/home_controller.dart';
 import 'thread_page.dart';
 
 class FollowingPage extends StatelessWidget {
   final bool isDarkMode;
-  final List followedThreads;
+  
+  FollowingPage({super.key, required this.isDarkMode});
 
-  const FollowingPage({
-    super.key,
-    required this.isDarkMode,
-    required this.followedThreads,
-  });
+  final ProfileController profileC = Get.find<ProfileController>();
+  final HomeController homeC = Get.find<HomeController>();
 
   Color getBoardColor(String? boardType) {
     if (boardType == 'Asking') return Colors.redAccent;
@@ -31,74 +33,46 @@ class FollowingPage extends StatelessWidget {
         backgroundColor: bgColor,
         elevation: 0.5,
         iconTheme: IconThemeData(color: textColor),
-        title: Text(
-          'Thread yang Diikuti',
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: textColor,
-          ),
-        ),
+        title: Text('Thread yang Diikuti', style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
       ),
-      body: followedThreads.isEmpty
-          ? Center(
-              child: Text(
-                'Kamu belum mengikuti thread apapun.',
-                style: TextStyle(color: subTextColor, fontSize: 14),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: followedThreads.length,
-              itemBuilder: (context, index) {
-                var thread = followedThreads[index];
-                String bType = thread['boardType'] ?? 'Gallery';
-                Color bColor = getBoardColor(bType);
+      // PERBAIKAN: Membungkus ListView dengan Obx yang aman menggunakan .obs getter controller
+      body: Obx(() {
+        List followedThreads = profileC.followedThreads;
+        
+        if (followedThreads.isEmpty) {
+          return Center(child: Text('Kamu belum mengikuti thread apapun.', style: TextStyle(color: subTextColor, fontSize: 14)));
+        }
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: bColor.withValues(alpha: 0.1),
-                      child: Icon(Icons.forum_rounded, color: bColor),
-                    ),
-                    title: Text(
-                      thread['threadName'] ?? 'Thread',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: bColor, // Warna teks sesuai jenis board-nya!
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Board: $bType',
-                      style: TextStyle(color: subTextColor, fontSize: 12),
-                    ),
-                    trailing: Icon(Icons.arrow_forward_ios_rounded,
-                        size: 14, color: subTextColor),
-                    onTap: () {
-                      // Langsung pindah ke halaman forum thread saat ditekan
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ThreadPage(
-                            threadInfo: thread,
-                            isDarkMode: isDarkMode,
-                            onFollowChanged: (updatedThread, status) {},
-                          ),
-                        ),
-                      );
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: followedThreads.length,
+          itemBuilder: (context, index) {
+            var thread = followedThreads[index];
+            String bType = thread['boardType'] ?? 'Gallery';
+            Color bColor = getBoardColor(bType);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
+              child: ListTile(
+                leading: CircleAvatar(backgroundColor: bColor.withValues(alpha: 0.1), child: Icon(Icons.forum_rounded, color: bColor)),
+                title: Text(thread['threadName'] ?? 'Thread', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: bColor)),
+                subtitle: Text('Board: $bType', style: TextStyle(color: subTextColor, fontSize: 12)),
+                trailing: Icon(Icons.arrow_forward_ios_rounded, size: 14, color: subTextColor),
+                onTap: () {
+                  Get.to(() => ThreadPage(
+                    threadInfo: thread,
+                    isDarkMode: isDarkMode,
+                    onFollowChanged: (updatedThread, status) {
+                      homeC.toggleFollow(updatedThread);
                     },
-                  ),
-                );
-              },
-            ),
+                  ));
+                },
+              ),
+            );
+          },
+        );
+      }),
     );
   }
 }

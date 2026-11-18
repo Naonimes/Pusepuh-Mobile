@@ -1,69 +1,28 @@
+// lib/views/thread_page.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../controllers/thread_controller.dart';
+import '../controllers/auth_controller.dart';
 import 'create_post_page.dart';
+import 'post_card_widget.dart';
 
-class ThreadPage extends StatefulWidget {
+class ThreadPage extends StatelessWidget {
   final Map threadInfo;
   final bool isDarkMode;
-  final bool isLoggedIn;
-  final String loggedInUser;
-  final VoidCallback? onLoginRequired;
   final Function(Map, bool) onFollowChanged;
 
-  const ThreadPage({
+  ThreadPage({
     super.key,
     required this.threadInfo,
     required this.isDarkMode,
-    this.isLoggedIn = false,
-    this.loggedInUser = '',
-    this.onLoginRequired,
     required this.onFollowChanged,
-  });
-
-  @override
-  State<ThreadPage> createState() => _ThreadPageState();
-}
-
-class _ThreadPageState extends State<ThreadPage> {
-  final TextEditingController commentController = TextEditingController();
-  final FocusNode commentFocusNode = FocusNode();
-  
-  late List allPosts;
-  int activePostIndex = 0;
-  Map? activePostData;
-  List commentList = [];
-  String? replyingToUser;
-  int? replyingToCommentId;
-
-  @override
-  void initState() {
-    super.initState();
-    segarkanDataThread();
+  }) {
+    threadC.inisialisasiDataThread(threadInfo);
   }
 
-  void segarkanDataThread() {
-    if (widget.threadInfo['posts'] == null) {
-      if (widget.threadInfo['post'] != null) {
-        widget.threadInfo['posts'] = [widget.threadInfo['post']];
-      } else {
-        widget.threadInfo['posts'] = [];
-      }
-    }
-    allPosts = widget.threadInfo['posts'];
-    if (allPosts.isNotEmpty) {
-      if (activePostIndex >= allPosts.length) {
-        activePostIndex = 0;
-      }
-      activePostData = allPosts[activePostIndex];
-      if (activePostData!['comments'] == null) {
-        activePostData!['comments'] = [];
-      }
-      commentList = activePostData!['comments'];
-      sortCommentsByLikes();
-    } else {
-      activePostData = null;
-      commentList = [];
-    }
-  }
+  final ThreadController threadC = Get.put(ThreadController());
+  final AuthController authC = Get.find<AuthController>();
+
 
   String ambilPembuatThread(Map threadItem) {
     if (threadItem['threadCreator'] != null && threadItem['threadCreator'].toString().isNotEmpty) {
@@ -82,45 +41,13 @@ class _ThreadPageState extends State<ThreadPage> {
     String tName = (threadItem['threadName'] ?? '').toString().toLowerCase();
     String bType = (threadItem['boardType'] ?? 'Gallery').toString();
 
-    if (tName.contains('kritik') || tName.contains('critique')) {
-      return 'Ruang diskusi untuk meminta kritik, saran konstruktif, dan evaluasi karya ilustrasi dari sesama seniman.';
-    }
-    if (tName.contains('uma')) {
-      return 'Tempat berkumpulnya para penggemar dan ilustrator untuk membagikan fanart karakter Umamusume.';
-    }
-    if (tName.contains('ibis')) {
-      return 'Pusat berbagi kode QR brush, tips, dan informasi update seputar aplikasi Ibis Paint X.';
-    }
-    if (tName.contains('background') || tName.contains('scene')) {
-      return 'Komunitas khusus berbagi referensi dan karya ilustrasi latar belakang (background/scenery) ala anime.';
-    }
-    if (tName.contains('showcase') || tName.contains('oc')) {
-      return 'Panggung pameran karya Original Character (OC) dan ilustrasi terbaikmu untuk diapresiasi bersama.';
-    }
+    if (tName.contains('kritik') || tName.contains('critique')) return 'Ruang diskusi untuk meminta kritik, saran konstruktif, dan evaluasi karya ilustrasi dari sesama seniman.';
+    if (tName.contains('uma')) return 'Tempat berkumpulnya para penggemar dan ilustrator untuk membagikan fanart karakter Umamusume.';
+    if (tName.contains('ibis')) return 'Pusat berbagi kode QR brush, tips, dan informasi update seputar aplikasi Ibis Paint X.';
+    if (tName.contains('background') || tName.contains('scene')) return 'Komunitas khusus berbagi referensi dan karya ilustrasi latar belakang (background/scenery) ala anime.';
+    if (tName.contains('showcase') || tName.contains('oc')) return 'Panggung pameran karya Original Character (OC) dan ilustrasi terbaikmu untuk diapresiasi bersama.';
+    
     return 'Ruang komunitas di board $bType untuk berdiskusi dan berbagi karya seputar topik $tName.';
-  }
-
-  void pilihPostUntukKomentar(int index) {
-    if (allPosts.isEmpty) return;
-    setState(() {
-      activePostIndex = index;
-      activePostData = allPosts[activePostIndex];
-      if (activePostData!['comments'] == null) {
-        activePostData!['comments'] = [];
-      }
-      commentList = activePostData!['comments'];
-      replyingToUser = null;
-      replyingToCommentId = null;
-      sortCommentsByLikes();
-    });
-  }
-
-  void sortCommentsByLikes() {
-    commentList.sort((a, b) {
-      int likesA = a['likes'] ?? 0;
-      int likesB = b['likes'] ?? 0;
-      return likesB.compareTo(likesA);
-    });
   }
 
   Color getBoardColor(String? boardType) {
@@ -129,117 +56,44 @@ class _ThreadPageState extends State<ThreadPage> {
     return Colors.green;
   }
 
-  void tanganiLoginRequired() {
-    if (widget.onLoginRequired != null) {
-      widget.onLoginRequired!();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan login terlebih dahulu dari Beranda utama.')),
-      );
-    }
+  void tanganiLoginRequired(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Silakan login terlebih dahulu dari Beranda utama.')),
+    );
   }
 
-  void bukaFormTambahPostingan() async {
-    if (!widget.isLoggedIn) {
-      tanganiLoginRequired();
+  void bukaFormTambahPostingan(BuildContext context) async {
+    if (!authC.isLoggedIn.value) {
+      tanganiLoginRequired(context);
       return;
     }
 
-    final hasil = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreatePostPage(
-          isDarkMode: widget.isDarkMode,
-          loggedInUser: widget.loggedInUser,
-          initialThreadName: (widget.threadInfo['threadName'] ?? '').toString(),
-        ),
-      ),
-    );
+    final hasil = await Get.to(() => CreatePostPage(
+          isDarkMode: isDarkMode,
+          loggedInUser: authC.loggedInUser.value,
+          initialThreadName: (threadInfo['threadName'] ?? '').toString(),
+        ));
 
     if (hasil != null) {
-      setState(() {
-        activePostIndex = 0;
-        segarkanDataThread();
-      });
+      threadC.inisialisasiDataThread(threadInfo);
     }
-  }
-
-  void kirimKomentar() {
-    if (!widget.isLoggedIn) {
-      tanganiLoginRequired();
-      return;
-    }
-    if (activePostData == null) return;
-
-    String text = commentController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      if (replyingToUser != null && replyingToCommentId != null) {
-        for (var c in commentList) {
-          if (c['id'] == replyingToCommentId) {
-            c['replies'] = c['replies'] ?? [];
-            c['replies'].add({
-              'userName': widget.loggedInUser,
-              'text': text,
-              'time': 'Baru saja',
-              'likes': 0,
-              'isLiked': false,
-            });
-            break;
-          }
-        }
-      } else {
-        commentList.add({
-          'id': DateTime.now().millisecondsSinceEpoch,
-          'userName': widget.loggedInUser,
-          'time': 'Baru saja',
-          'text': text,
-          'likes': 0,
-          'isLiked': false,
-          'replies': [],
-        });
-      }
-      
-      activePostData!['replies'] = commentList.length;
-      sortCommentsByLikes();
-      commentController.clear();
-      replyingToUser = null;
-      replyingToCommentId = null;
-    });
-    FocusScope.of(context).unfocus();
-  }
-
-  void toggleLikeComment(Map comment) {
-    if (!widget.isLoggedIn) {
-      tanganiLoginRequired();
-      return;
-    }
-
-    setState(() {
-      bool isLiked = comment['isLiked'] ?? false;
-      int likes = comment['likes'] ?? 0;
-      comment['isLiked'] = !isLiked;
-      comment['likes'] = isLiked ? likes - 1 : likes + 1;
-      sortCommentsByLikes();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor = widget.isDarkMode ? const Color(0xFF121212) : Colors.white;
-    Color cardColor = widget.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
-    Color textColor = widget.isDarkMode ? Colors.white : Colors.black87;
-    Color subTextColor = widget.isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
-    Color borderColor = widget.isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
+    Color bgColor = isDarkMode ? const Color(0xFF121212) : Colors.white;
+    Color cardColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
+    Color textColor = isDarkMode ? Colors.white : Colors.black87;
+    Color subTextColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+    Color borderColor = isDarkMode ? Colors.grey[800]! : Colors.grey[200]!;
     Color primaryBlue = const Color(0xFF2563EB);
 
-    String bType = widget.threadInfo['boardType'] ?? 'Gallery';
+    String bType = threadInfo['boardType'] ?? 'Gallery';
     Color bColor = getBoardColor(bType);
-    bool isFollowed = widget.threadInfo['isFollowed'] ?? false;
-    String threadName = widget.threadInfo['threadName'] ?? 'p/thread';
-    String threadCreator = ambilPembuatThread(widget.threadInfo);
-    String threadDesc = ambilDeskripsiThread(widget.threadInfo);
+    bool isFollowed = threadInfo['isFollowed'] ?? false;
+    String threadName = threadInfo['threadName'] ?? 'p/thread';
+    String threadCreator = ambilPembuatThread(threadInfo);
+    String threadDesc = ambilDeskripsiThread(threadInfo);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -249,18 +103,13 @@ class _ThreadPageState extends State<ThreadPage> {
         iconTheme: IconThemeData(color: textColor),
         title: Text(
           threadName,
-          style: TextStyle(
-            fontFamily: 'Poppins',
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: bColor,
-          ),
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 16, color: bColor),
         ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ElevatedButton.icon(
-              onPressed: bukaFormTambahPostingan,
+              onPressed: () => bukaFormTambahPostingan(context),
               icon: const Icon(Icons.add_rounded, size: 18),
               label: const Text('Add Post'),
               style: ElevatedButton.styleFrom(
@@ -276,510 +125,298 @@ class _ThreadPageState extends State<ThreadPage> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 20),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: widget.isDarkMode ? bColor.withValues(alpha: 0.18) : bColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: bColor, width: 1.5),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 22,
-                              backgroundColor: bColor,
-                              child: const Icon(Icons.tag, color: Colors.white, size: 24),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: bColor,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          'Board: $bType',
-                                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    threadName,
-                                    style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor),
-                                  ),
-                                  Text(
-                                    'Dibuat oleh @$threadCreator',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: bColor),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            InkWell(
-                              onTap: () {
-                                if (!widget.isLoggedIn) {
-                                  tanganiLoginRequired();
-                                  return;
-                                }
-                                setState(() {
-                                  widget.threadInfo['isFollowed'] = !isFollowed;
-                                  widget.onFollowChanged(widget.threadInfo, !isFollowed);
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: isFollowed ? Colors.transparent : bColor,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: bColor),
-                                ),
-                                child: Text(
-                                  isFollowed ? 'Following' : '+ Follow',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isFollowed ? bColor : Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Divider(color: bColor.withValues(alpha: 0.3), height: 1),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Tentang Thread Ini:',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: bColor),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          threadDesc,
-                          style: TextStyle(fontSize: 13, height: 1.4, color: textColor),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Row(
-                    children: [
-                      Icon(Icons.dynamic_feed_rounded, size: 18, color: subTextColor),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Daftar Postingan (${allPosts.length})',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  if (allPosts.isEmpty)
+        child: Obx(() {
+          return Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  children: [
+                    // Kotak Info Thread (Tombol Follow HANYA ADA DI SINI)
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: borderColor),
+                        color: isDarkMode ? bColor.withValues(alpha: 0.18) : bColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: bColor, width: 1.5),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.post_add_rounded, size: 42, color: subTextColor),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Belum ada postingan di thread ini.',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Jadilah yang pertama meramaikan diskusi dengan menekan tombol + Add Post di atas!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12, color: subTextColor),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    ...List.generate(allPosts.length, (idx) {
-                      var itemPost = allPosts[idx];
-                      bool isReposted = itemPost['isReposted'] ?? false;
-                      bool isSelectedPost = activePostIndex == idx;
-
-                      return GestureDetector(
-                        onTap: () => pilihPostUntukKomentar(idx),
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isSelectedPost && allPosts.length > 1 ? primaryBlue : borderColor,
-                              width: isSelectedPost && allPosts.length > 1 ? 1.5 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                                    child: Icon(Icons.person_outline_rounded, size: 22, color: subTextColor),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          itemPost['userName'] ?? 'User',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor),
-                                        ),
-                                        Text(
-                                          itemPost['time'] ?? 'Baru saja',
-                                          style: TextStyle(fontSize: 11, color: subTextColor),
-                                        ),
-                                      ],
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: bColor,
+                                child: const Icon(Icons.tag, color: Colors.white, size: 24),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(color: bColor, borderRadius: BorderRadius.circular(6)),
+                                      child: Text('Board: $bType', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                itemPost['title'] ?? '',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                itemPost['caption'] ?? '',
-                                style: TextStyle(fontSize: 13, height: 1.4, color: subTextColor),
-                              ),
-                              if (itemPost['hasImage'] == true) ...[
-                                const SizedBox(height: 12),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: Image.network(
-                                    itemPost['imageUrl'] ?? '',
-                                    width: double.infinity,
-                                    height: 190,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        width: double.infinity,
-                                        height: 190,
-                                        color: widget.isDarkMode ? Colors.grey[800] : Colors.grey[300],
-                                        child: Icon(Icons.broken_image_outlined, color: subTextColor),
-                                      );
-                                    },
-                                  ),
+                                    const SizedBox(height: 4),
+                                    Text(threadName, style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 18, color: textColor)),
+                                    Text('Dibuat oleh @$threadCreator', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: bColor)),
+                                  ],
                                 ),
-                              ],
-                              const SizedBox(height: 12),
-                              Divider(color: borderColor, height: 1),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      if (!widget.isLoggedIn) {
-                                        tanganiLoginRequired();
-                                        return;
-                                      }
-                                      setState(() {
-                                        bool isUp = itemPost['isUpvoted'] ?? false;
-                                        int upvotes = itemPost['upvotes'] ?? 0;
-                                        itemPost['isUpvoted'] = !isUp;
-                                        itemPost['upvotes'] = isUp ? upvotes - 1 : upvotes + 1;
-                                      });
-                                    },
-                                  child: Row(
-                                      children: [
-                                        Icon(Icons.arrow_upward_rounded, size: 18, color: (itemPost['isUpvoted'] ?? false) ? primaryBlue : subTextColor),
-                                        const SizedBox(width: 4),
-                                        Text('Up (${itemPost['upvotes'] ?? 0})', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: (itemPost['isUpvoted'] ?? false) ? primaryBlue : subTextColor)),
-                                      ],
-                                    ),
+                              ),
+                              // Tombol Follow eksklusif di Thread Page
+                              InkWell(
+                                onTap: () {
+                                  if (!authC.isLoggedIn.value) {
+                                    tanganiLoginRequired(context);
+                                    return;
+                                  }
+                                  threadInfo['isFollowed'] = !isFollowed;
+                                  onFollowChanged(threadInfo, !isFollowed);
+                                  threadC.allPosts.refresh();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isFollowed ? Colors.transparent : bColor,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: bColor),
                                   ),
-                                  InkWell(
-                                    onTap: () {
-                                      pilihPostUntukKomentar(idx);
-                                      commentFocusNode.requestFocus();
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.chat_bubble_outline_rounded, size: 17, color: isSelectedPost ? primaryBlue : subTextColor),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${itemPost['replies'] ?? 0} Reply',
-                                          style: TextStyle(fontSize: 12, fontWeight: isSelectedPost ? FontWeight.bold : FontWeight.normal, color: isSelectedPost ? primaryBlue : subTextColor),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      if (!widget.isLoggedIn) {
-                                        tanganiLoginRequired();
-                                        return;
-                                      }
-                                      setState(() {
-                                        itemPost['isReposted'] = !isReposted;
-                                      });
-                                    },
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.repeat_rounded, size: 18, color: isReposted ? Colors.green : subTextColor),
-                                        const SizedBox(width: 4),
-                                        Text('Repost', style: TextStyle(fontSize: 12, color: isReposted ? Colors.green : subTextColor)),
-                                      ],
-                                    ),
-                                  ),
-                                  Icon(Icons.share_outlined, size: 18, color: subTextColor),
-                                ],
+                                  child: Text(isFollowed ? 'Following' : '+ Follow', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: isFollowed ? bColor : Colors.white)),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                      );
-                    }),
+                          const SizedBox(height: 12),
+                          Divider(color: bColor.withValues(alpha: 0.3), height: 1),
+                          const SizedBox(height: 10),
+                          Text('Tentang Thread Ini:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: bColor)),
+                          const SizedBox(height: 4),
+                          Text(threadDesc, style: TextStyle(fontSize: 13, height: 1.4, color: textColor)),
+                        ],
+                      ),
+                    ),
 
-                  if (activePostData != null) ...[
-                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded, size: 16, color: primaryBlue),
+                        Icon(Icons.dynamic_feed_rounded, size: 18, color: subTextColor),
                         const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            allPosts.length > 1
-                                ? 'Komentar pada "${activePostData!['title'] ?? 'Postingan'}" (${commentList.length})'
-                                : 'Komentar (${commentList.length})',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
-                          ),
-                        ),
+                        Text('Daftar Postingan (${threadC.allPosts.length})', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (commentList.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: Text(
-                            'Belum ada komentar di postingan ini. Yuk berkomentar!',
-                            style: TextStyle(color: subTextColor, fontSize: 13),
-                          ),
+
+                    if (threadC.allPosts.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                        decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: borderColor)),
+                        child: Column(
+                          children: [
+                            Icon(Icons.post_add_rounded, size: 42, color: subTextColor),
+                            const SizedBox(height: 8),
+                            Text('Belum ada postingan di thread ini.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textColor)),
+                            const SizedBox(height: 4),
+                            Text('Jadilah yang pertama meramaikan diskusi dengan menekan tombol + Add Post di atas!', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: subTextColor)),
+                          ],
                         ),
                       )
                     else
-                      ...commentList.map((c) {
-                        bool isLiked = c['isLiked'] ?? false;
-                        int likes = c['likes'] ?? 0;
-                        List subReplies = c['replies'] ?? [];
+                      ...List.generate(threadC.allPosts.length, (idx) {
+                        var itemPost = threadC.allPosts[idx];
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: borderColor),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 14,
-                                    backgroundColor: widget.isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                                    child: Icon(Icons.person, size: 16, color: primaryBlue),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          c['userName'] ?? 'User',
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textColor),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          '• ${c['time'] ?? ''}',
-                                          style: TextStyle(fontSize: 10, color: subTextColor),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  InkWell(
-                                    onTap: () => toggleLikeComment(c),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                          size: 16,
-                                          color: isLiked ? Colors.redAccent : subTextColor,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          likes.toString(),
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: isLiked ? Colors.redAccent : subTextColor,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                c['text'] ?? '',
-                                style: TextStyle(fontSize: 12.5, height: 1.4, color: textColor),
-                              ),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: () {
-                                  if (!widget.isLoggedIn) {
-                                    tanganiLoginRequired();
-                                    return;
-                                  }
-                                  setState(() {
-                                    replyingToUser = c['userName'];
-                                    replyingToCommentId = c['id'];
-                                  });
-                                  commentFocusNode.requestFocus();
-                                },
-                                child: Text(
-                                  'Reply',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryBlue,
-                                  ),
-                                ),
-                              ),
-                              if (subReplies.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                ...subReplies.map((r) {
-                                  return Container(
-                                    margin: const EdgeInsets.only(top: 6, left: 16),
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: widget.isDarkMode ? const Color(0xFF262626) : Colors.grey[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              r['userName'] ?? '',
-                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: textColor),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              r['time'] ?? '',
-                                              style: TextStyle(fontSize: 9, color: subTextColor),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          r['text'] ?? '',
-                                          style: TextStyle(fontSize: 11.5, color: textColor),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ],
+                        return GestureDetector(
+                          onTap: () => threadC.pilihPostUntukKomentar(idx),
+                          child: PostCardWidget(
+                            threadItem: threadInfo,
+                            post: itemPost,
+                            isDarkMode: isDarkMode,
+                            onUpvotePressed: () {
+                              if (!authC.isLoggedIn.value) {
+                                tanganiLoginRequired(context);
+                                return;
+                              }
+                              threadC.toggleUpvote(itemPost);
+                            },
+                            onRepostPressed: () {
+                              if (!authC.isLoggedIn.value) {
+                                tanganiLoginRequired(context);
+                                return;
+                              }
+                              threadC.toggleRepost(itemPost);
+                            },
+                            onReplyPressed: () {
+                              threadC.pilihPostUntukKomentar(idx);
+                              threadC.commentFocusNode.requestFocus();
+                            },
                           ),
                         );
                       }),
-                  ],
-                ],
-              ),
-            ),
-            if (activePostData != null && replyingToUser != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                color: widget.isDarkMode ? const Color(0xFF222222) : Colors.grey[200],
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Membalas @$replyingToUser',
-                      style: TextStyle(fontSize: 11, color: primaryBlue, fontWeight: FontWeight.w600),
-                    ),
-                    InkWell(
-                      onTap: () {
-                        setState(() {
-                          replyingToUser = null;
-                          replyingToCommentId = null;
-                        });
-                      },
-                      child: Icon(Icons.close_rounded, size: 16, color: subTextColor),
-                    ),
+
+                    // Daftar Komentar
+                    if (threadC.allPosts.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(Icons.chat_bubble_outline_rounded, size: 16, color: primaryBlue),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              threadC.allPosts.length > 1
+                                  ? 'Komentar pada "${threadC.allPosts[threadC.activePostIndex.value]['title'] ?? 'Postingan'}" (${threadC.commentList.length})'
+                                  : 'Komentar (${threadC.commentList.length})',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      if (threadC.commentList.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(child: Text('Belum ada komentar di postingan ini. Yuk berkomentar!', style: TextStyle(color: subTextColor, fontSize: 13))),
+                        )
+                      else
+                        ...threadC.commentList.map((c) {
+                          bool isLiked = c['isLiked'] ?? false;
+                          int likes = c['likes'] ?? 0;
+                          List subReplies = c['replies'] ?? [];
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    CircleAvatar(radius: 14, backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200], child: Icon(Icons.person, size: 16, color: primaryBlue)),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Text(c['userName'] ?? 'User', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textColor)),
+                                          const SizedBox(width: 6),
+                                          Text('• ${c['time'] ?? ''}', style: TextStyle(fontSize: 10, color: subTextColor)),
+                                        ],
+                                      ),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        if (!authC.isLoggedIn.value) tanganiLoginRequired(context);
+                                        else threadC.toggleLikeComment(c);
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Icon(isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 16, color: isLiked ? Colors.redAccent : subTextColor),
+                                          const SizedBox(width: 4),
+                                          Text(likes.toString(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: isLiked ? Colors.redAccent : subTextColor)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(c['text'] ?? '', style: TextStyle(fontSize: 12.5, height: 1.4, color: textColor)),
+                                const SizedBox(height: 6),
+                                InkWell(
+                                  onTap: () {
+                                    if (!authC.isLoggedIn.value) tanganiLoginRequired(context);
+                                    else threadC.setReplyTo(c['userName'], c['id']);
+                                  },
+                                  child: Text('Reply', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: primaryBlue)),
+                                ),
+                                if (subReplies.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  ...subReplies.map((r) => Container(
+                                        margin: const EdgeInsets.only(top: 6, left: 16),
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF262626) : Colors.grey[100], borderRadius: BorderRadius.circular(8)),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(r['userName'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: textColor)),
+                                                const SizedBox(width: 6),
+                                                Text(r['time'] ?? '', style: TextStyle(fontSize: 9, color: subTextColor)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(r['text'] ?? '', style: TextStyle(fontSize: 11.5, color: textColor)),
+                                          ],
+                                        ),
+                                      )),
+                                ],
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
                   ],
                 ),
               ),
-            if (activePostData != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: cardColor,
-                  border: Border(top: BorderSide(color: borderColor)),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: commentController,
-                        focusNode: commentFocusNode,
-                        readOnly: !widget.isLoggedIn,
+
+              // Bagian Kirim Komentar
+              if (threadC.allPosts.isNotEmpty && threadC.replyingToUser.value != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  color: isDarkMode ? const Color(0xFF222222) : Colors.grey[200],
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Membalas @${threadC.replyingToUser.value}', style: TextStyle(fontSize: 11, color: primaryBlue, fontWeight: FontWeight.w600)),
+                      InkWell(
                         onTap: () {
-                          if (!widget.isLoggedIn) {
-                            tanganiLoginRequired();
-                          }
+                          threadC.replyingToUser.value = null;
+                          threadC.replyingToCommentId.value = null;
                         },
-                        style: TextStyle(color: textColor, fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: replyingToUser != null ? 'Tulis balasan...' : 'Tulis komentar...',
-                          hintStyle: TextStyle(color: subTextColor),
-                          border: InputBorder.none,
+                        child: Icon(Icons.close_rounded, size: 16, color: subTextColor),
+                      ),
+                    ],
+                  ),
+                ),
+              
+              if (threadC.allPosts.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(color: cardColor, border: Border(top: BorderSide(color: borderColor))),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: threadC.commentController,
+                          focusNode: threadC.commentFocusNode,
+                          readOnly: !authC.isLoggedIn.value,
+                          onTap: () {
+                            if (!authC.isLoggedIn.value) tanganiLoginRequired(context);
+                          },
+                          style: TextStyle(color: textColor, fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: threadC.replyingToUser.value != null ? 'Tulis balasan...' : 'Tulis komentar...',
+                            hintStyle: TextStyle(color: subTextColor),
+                            border: InputBorder.none,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: kirimKomentar,
-                      icon: Icon(Icons.send_rounded, color: primaryBlue),
-                    ),
-                  ],
+                      IconButton(
+                        onPressed: () {
+                          if (!authC.isLoggedIn.value) tanganiLoginRequired(context);
+                          else threadC.kirimKomentar();
+                        },
+                        icon: Icon(Icons.send_rounded, color: primaryBlue),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }

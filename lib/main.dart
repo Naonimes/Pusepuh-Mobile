@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart'; // Import GetX
 import 'views/home_page.dart'; // Sesuaikan path
+import 'package:pusepuh_mobile/controllers/auth_controller.dart';
 
 void main() {
+  Get.put(AuthController(), permanent: true);
   runApp(const PusepuhApp());
 }
 

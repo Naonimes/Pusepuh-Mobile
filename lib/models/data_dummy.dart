@@ -1,4 +1,12 @@
 // data_dummy.dart
+List<Map<String, dynamic>> databaseAkun_103022400061 = [
+  {
+    'email': 'hilmyrafi@pusepuh.com',
+    'username': 'hilmyrafi',
+    'password': 'Seele2136#',
+    'topics': <String>['Melihat gambar dan media hiburan'],
+  },
+];
 
 final List masterThreads = [
   {
@@ -147,3 +155,4 @@ final List masterThreads = [
     }
   },
 ];
+
